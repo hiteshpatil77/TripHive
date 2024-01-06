@@ -7,7 +7,7 @@ const CustomText = ({children, style, ...props}) => {
     <Text
       style={[
         {
-          fontFamily: Fonts.Regular, // Default font
+          fontFamily: Fonts.MontserratRegular, // Default font
         },
         style, // Additional styles passed as props
       ]}

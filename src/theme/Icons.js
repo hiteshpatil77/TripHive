@@ -21,5 +21,15 @@ const Icons = {
   Travel: require('../assets/Images/Travel.png'),
   Explore: require('../assets/Images/Explore.png'),
   Unique: require('../assets/Images/Unique.png'),
+  Setting: require('../assets/Icon/Settings.png'),
+  Button: require('../assets/Icon/+Button.png'),
+  Trip: require('../assets/Icon/suittcase.png'),
+  Expenses: require('../assets/Icon/budget.png'),
+  Home: require('../assets/Icon/Home.png'),
+  Trash: require('../assets/Icon/Trash.png'),
+  Pen: require('../assets/Icon/Pen.png'),
+  Star: require('../assets/Icon/Star.png'),
+  White: require('../assets/Icon/White.png'),
+  errowe: require('../assets/Icon/errowe.png'),
 };
 export default Icons;

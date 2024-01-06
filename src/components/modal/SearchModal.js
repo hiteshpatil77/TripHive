@@ -1,3 +1,4 @@
+import React, {useEffect, useRef} from 'react';
 import {
   Modal,
   StyleSheet,
@@ -6,11 +7,9 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React from 'react';
-import {FS, HP, WP} from '../../utils/Dimention';
+import {HP, WP} from '../../utils/Dimention';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Fontisto from 'react-native-vector-icons/Fontisto';
-import Colors from '../../theme/Color';
 import CustomText from '../CustomText';
 
 export default function SearchModal({modalVisible, closeModal}) {
@@ -25,6 +24,16 @@ export default function SearchModal({modalVisible, closeModal}) {
     },
   ];
 
+  // Create a ref for the TextInput
+  const inputRef = useRef(null);
+
+  // Use useEffect to focus on the TextInput when modal becomes visible
+  useEffect(() => {
+    if (modalVisible && inputRef.current) {
+      inputRef.current.focus(); // Focus on the input field when the modal opens
+    }
+  }, [modalVisible]); // Re-run this effect when modalVisible changes
+
   return (
     <Modal visible={modalVisible} animationType="slide" transparent={true}>
       <View style={styles.modalContainer}>
@@ -35,6 +44,7 @@ export default function SearchModal({modalVisible, closeModal}) {
 
           <View style={styles.searchInputContainer}>
             <TextInput
+              ref={inputRef} // Assign the ref to the TextInput
               placeholder="Search destinations, hotels..."
               style={styles.searchInput}
             />

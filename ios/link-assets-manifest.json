@@ -3,83 +3,87 @@
   "data": [
     {
       "path": "src/assets/fonts/Montserrat-Black.ttf",
-      "sha1": "ad9c434705a52d90ac5a770e591c2325fb48c2dc"
+      "sha1": "ea4feb16f3d8cb3f1cbc8e3a7af7388cc01ce32e"
     },
     {
-      "path": "src/assets/fonts/Poppins-Black.otf",
-      "sha1": "655fab6b19943846e5f0ffcd16db0db9c3f71388"
+      "path": "src/assets/fonts/Montserrat-BlackItalic.ttf",
+      "sha1": "d439bd54958ff80dc23d4d3edc5a5115a6e827a8"
     },
     {
-      "path": "src/assets/fonts/Poppins-BlackItalic.otf",
-      "sha1": "eedb44118d88c4539b6d4406eefee0c1cd0f30f5"
+      "path": "src/assets/fonts/Montserrat-Bold.ttf",
+      "sha1": "c7d907722af4fb845ab97d515bb414f29651f000"
     },
     {
-      "path": "src/assets/fonts/Poppins-Bold.otf",
-      "sha1": "fc40855366c1f38478de1473bf483a4ad5d515ac"
+      "path": "src/assets/fonts/Montserrat-BoldItalic.ttf",
+      "sha1": "eee7f440754eb6ecbfcc461e9af2536ed0286a7f"
     },
     {
-      "path": "src/assets/fonts/Poppins-BoldItalic.otf",
-      "sha1": "1b542893528d1461ddef0a8013f43a91967505c6"
+      "path": "src/assets/fonts/Montserrat-ExtraBold.ttf",
+      "sha1": "4a2cbee7a7ab79ab2cf0c120c962384dc240b237"
     },
     {
-      "path": "src/assets/fonts/Poppins-ExtraBold.otf",
-      "sha1": "d1c2b0934a312e45e8ac0e4ce40916909ce957de"
+      "path": "src/assets/fonts/Montserrat-ExtraBoldItalic.ttf",
+      "sha1": "f6ab908d898677add7044582e5a3e961317fe75f"
     },
     {
-      "path": "src/assets/fonts/Poppins-ExtraBoldItalic.otf",
-      "sha1": "63235caa73017e3f7cec67acbf4347b5d4a685f2"
+      "path": "src/assets/fonts/Montserrat-ExtraLight.ttf",
+      "sha1": "c198620afdbc8ebbb68ea2b71ffab9188037d602"
     },
     {
-      "path": "src/assets/fonts/Poppins-ExtraLight.otf",
-      "sha1": "30bab3b24243bf0ce8ae297ed34c21a2399da47a"
+      "path": "src/assets/fonts/Montserrat-ExtraLightItalic.ttf",
+      "sha1": "a2fc69ceaf90f83fc899ee75190b3ef954e5e073"
     },
     {
-      "path": "src/assets/fonts/Poppins-ExtraLightItalic.otf",
-      "sha1": "e2d7d6fccfda770b9f43824babc0fe423c6fc67d"
+      "path": "src/assets/fonts/Montserrat-Italic.ttf",
+      "sha1": "763e9c22a750ff1241aacf1e0e4d3050827b9783"
     },
     {
-      "path": "src/assets/fonts/Poppins-Italic.otf",
-      "sha1": "451e46b5022499a23652409cb2fb389b57fb0b17"
+      "path": "src/assets/fonts/Montserrat-Light.ttf",
+      "sha1": "1db8878a7654208b6c55402f6ff717e03a312e1e"
     },
     {
-      "path": "src/assets/fonts/Poppins-Light.otf",
-      "sha1": "37c17e7bee737afaa91b0880df6cbd1f43f1a270"
+      "path": "src/assets/fonts/Montserrat-LightItalic.ttf",
+      "sha1": "91fcb7d72360f81be21a4b1fda01959d16179735"
     },
     {
-      "path": "src/assets/fonts/Poppins-LightItalic.otf",
-      "sha1": "681b445dad2461920b894f6c36b6e06161549f31"
+      "path": "src/assets/fonts/Montserrat-Medium.ttf",
+      "sha1": "4656e40419da86a5fec473ea8e7fc0efef183f05"
     },
     {
-      "path": "src/assets/fonts/Poppins-Medium.otf",
-      "sha1": "e566106c0be5bca5cb3dd0223953310774f7ca59"
+      "path": "src/assets/fonts/Montserrat-MediumItalic.ttf",
+      "sha1": "95bcdfd1606d7b1970a12399d23ddf8fbeeb490e"
     },
     {
-      "path": "src/assets/fonts/Poppins-MediumItalic.otf",
-      "sha1": "b16dc59f2271a905b4df4fbfe8100c074673208f"
+      "path": "src/assets/fonts/Montserrat-Regular.ttf",
+      "sha1": "1c8119b38eef1914a4fbd9f6cfdedf198445ab97"
     },
     {
-      "path": "src/assets/fonts/Poppins-Regular.otf",
-      "sha1": "e6fe7a5a39e5e9eabeceb3c853117827367d5c91"
+      "path": "src/assets/fonts/Montserrat-SemiBold.ttf",
+      "sha1": "d491c9d0af61faef59ca807737b560170f547f5b"
     },
     {
-      "path": "src/assets/fonts/Poppins-SemiBold.otf",
-      "sha1": "8c0d5c6d40881839910161929e727aac847666c6"
+      "path": "src/assets/fonts/Montserrat-SemiBoldItalic.ttf",
+      "sha1": "d5b90fca448ac51e9410d7c8de07eb64be27ed25"
     },
     {
-      "path": "src/assets/fonts/Poppins-SemiBoldItalic.otf",
-      "sha1": "35d85a97b8e2589d83aee4c6c1a1e9e21ba06d23"
+      "path": "src/assets/fonts/Montserrat-Thin.ttf",
+      "sha1": "447838642258b95e8a61df1770189f962cc0741b"
     },
     {
-      "path": "src/assets/fonts/Poppins-Thin.otf",
-      "sha1": "f0ddc10ee6c9742e1dba2451fbccb2beaff8ee0f"
+      "path": "src/assets/fonts/Montserrat-ThinItalic.ttf",
+      "sha1": "04f69417392da5f6f831fd89e6ff5698323fdecb"
     },
     {
-      "path": "src/assets/fonts/Poppins-ThinItalic.otf",
-      "sha1": "eeb0f5bb920494ed631e9f95c581598a8cc99fb7"
+      "path": "src/assets/fonts/Poppins-Italic.ttf",
+      "sha1": "e2bfcd56016c3c915221ef1c5fc1a17b0776eb91"
     },
     {
-      "path": "src/assets/fonts/SIL Open Font License.txt",
-      "sha1": "400185a71f50adb2438482b2f6a02cebeeda3b53"
+      "path": "src/assets/fonts/Poppins-Regular.ttf",
+      "sha1": "fdd3002e7d814ee47c1c1b8487c72c6bbb3a2d00"
+    },
+    {
+      "path": "src/assets/fonts/Poppins-SemiBoldItalic.ttf",
+      "sha1": "0c8bed0a5942b2388d36b11c115685d9f01700b0"
     }
   ]
 }
