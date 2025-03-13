@@ -5,7 +5,7 @@ import {FS, HP, WP} from '../../utils/Dimention';
 import Icon from 'react-native-vector-icons/AntDesign';
 import Colors from '../../theme/Color';
 import Input from '../../components/Input';
-import Fonts from '../../theme/fonts';
+import Fonts from '../../theme/Fonts';
 
 export default function SignIn({navigation}) {
   const handelSignIn = () => {

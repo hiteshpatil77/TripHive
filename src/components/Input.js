@@ -3,7 +3,7 @@ import React, {useState} from 'react';
 import {FS, HP, WP} from '../utils/Dimention';
 import Colors from '../theme/Color';
 import Feather from 'react-native-vector-icons/Feather';
-import Fonts from '../theme/fonts';
+import Fonts from '../theme/Fonts';
 
 // Dynamically import vector icons
 const getIconComponent = iconType => {

@@ -4,7 +4,7 @@ import {FS, HP, WP} from '../utils/Dimention';
 import Icon from 'react-native-vector-icons/AntDesign';
 import Colors from '../theme/Color';
 import Icons from '../theme/Icons';
-import Fonts from '../theme/fonts';
+import Fonts from '../theme/Fonts';
 export default function IconBar({icon, Color, name, onp, image}) {
   return (
     <TouchableOpacity

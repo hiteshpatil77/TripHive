@@ -17,7 +17,7 @@ import Input from '../../components/Input';
 import Icons from '../../theme/Icons';
 import Toast from 'react-native-toast-message';
 import RoundButton from '../../components/RoundButton';
-import Fonts from '../../theme/fonts';
+import Fonts from '../../theme/Fonts';
 
 export default function CreatAcc({navigation}) {
   const [name, setName] = useState('');

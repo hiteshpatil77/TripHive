@@ -5,7 +5,7 @@ import Icons from '../../theme/Icons';
 import {FS, HP, WP} from '../../utils/Dimention';
 import MainView from '../../components/MainView';
 import Colors from '../../theme/Color';
-import Fonts from '../../theme/fonts';
+import Fonts from '../../theme/Fonts';
 
 const FirstScreen = ({navigation}) => {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -13,7 +13,7 @@ const FirstScreen = ({navigation}) => {
 
   return (
     <MainView>
-      {activeIndex !== 4 && (
+      {activeIndex < 4 && (
         <TouchableOpacity
           onPress={() => swiperRef.current?.scrollBy(4 - activeIndex)}
           style={styles.skipButton}>

@@ -6,7 +6,7 @@ import Colors from '../../theme/Color';
 import IconBar from '../../components/IconBar';
 import Icon from 'react-native-vector-icons/AntDesign';
 import RoundButton from '../../components/RoundButton';
-import Fonts from '../../theme/fonts';
+import Fonts from '../../theme/Fonts';
 
 export default function Welcome({navigation}) {
   return (

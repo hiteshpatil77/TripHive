@@ -7,13 +7,13 @@ import Colors from '../../theme/Color';
 import {launchImageLibrary} from 'react-native-image-picker';
 import Input from '../../components/Input';
 import RoundButton from '../../components/RoundButton';
-import Fonts from '../../theme/fonts';
+import Fonts from '../../theme/Fonts';
 
 export default function SetupAccount({navigation}) {
   const [image, setImage] = useState(null);
 
   const selectImage = () => {
-    let options = {
+    let options = { 
       mediaType: 'photo',
       quality: 1,
     };

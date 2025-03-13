@@ -7,7 +7,7 @@ import Colors from '../../theme/Color';
 import MainView from '../../components/MainView';
 import Icon from 'react-native-vector-icons/AntDesign';
 import RoundButton from '../../components/RoundButton';
-import Fonts from '../../theme/fonts';
+import Fonts from '../../theme/Fonts';
 
 const OtpVerify = ({navigation, route}) => {
   // const {email} = route.params;
