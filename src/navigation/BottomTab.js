@@ -8,21 +8,34 @@ import TripsScreen from '../screens/BottomScreen/TripsScreen';
 import ExpensesScreen from '../screens/BottomScreen/ExpensesScreen';
 import ChatScreen from '../screens/BottomScreen/ChatScreen';
 import {HP} from '../utils/Dimention';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import FlightScreen from '../screens/Explore/FlightScreen';
 
 const Tab = createBottomTabNavigator();
+const Stack = createNativeStackNavigator();
+const Explore = () => {
+  return (
+    <Stack.Navigator screenOptions={{headerShown: false}}>
+      <Stack.Screen name="Explore" component={ExploreScreen} />
+      <Stack.Screen name="Flight" component={FlightScreen} />
+    </Stack.Navigator>
+  );
+};
 
-export default function BottomTabs() {
+export default function BottomTab() {
   return (
     <Tab.Navigator
       screenOptions={({route}) => ({
         tabBarStyle: {
-          borderRadius: 20,
-          margin: 10,
+          borderRadius: HP(2),
+          margin: HP(1),
           borderWidth: 1,
           borderColor: '#007bff',
           height: HP(7),
           position: 'absolute',
           marginBottom: HP(3),
+          bottom: HP(-2.5),
+          opacity: 1,
         },
         tabBarIcon: ({focused, color, size}) => {
           let iconName;
@@ -51,7 +64,7 @@ export default function BottomTabs() {
         tabBarInactiveTintColor: '#b0b0b0',
         headerShown: false,
       })}>
-      <Tab.Screen name="Explore" component={ExploreScreen} />
+      <Tab.Screen name="Explore" component={Explore} />
       <Tab.Screen name="Trips" component={TripsScreen} />
       <Tab.Screen name="Expenses" component={ExpensesScreen} />
       <Tab.Screen name="Chat" component={ChatScreen} />

@@ -18,5 +18,8 @@ const Icons = {
   lady5: require('../assets/Images/lady5.png'),
   plane: require('../assets/Images/plane.png'),
   dummy: require('../assets/Images/dummy.png'),
+  Travel: require('../assets/Images/Travel.png'),
+  Explore: require('../assets/Images/Explore.png'),
+  Unique: require('../assets/Images/Unique.png'),
 };
 export default Icons;

@@ -13,7 +13,7 @@ export default function SetupAccount({navigation}) {
   const [image, setImage] = useState(null);
 
   const selectImage = () => {
-    let options = { 
+    let options = {
       mediaType: 'photo',
       quality: 1,
     };
@@ -36,7 +36,7 @@ export default function SetupAccount({navigation}) {
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Icon name="left" size={HP(3)} color="black" />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => navigation.navigate('Welcome')}>
+          <TouchableOpacity onPress={() => navigation.navigate('BottomTab')}>
             <Text
               style={{
                 fontSize: FS(2),
@@ -90,7 +90,7 @@ export default function SetupAccount({navigation}) {
           justifyContent: 'flex-end',
           marginRight: HP(2),
         }}>
-        <RoundButton onp={() => navigation.navigate('Welcome')} />
+        <RoundButton onp={() => navigation.navigate('BottomTab')} />
       </View>
     </MainView>
   );

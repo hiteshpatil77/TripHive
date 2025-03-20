@@ -13,12 +13,13 @@ import otpVerify from '../screens/Register/CreatAcc';
 import OtpVerify from '../screens/Register/OtpVer';
 import SignIn from '../screens/Register/SignIn';
 import BottomTabs from './BottomTab';
+import BottomTab from './BottomTab';
 
 const Stack = createNativeStackNavigator();
 export default function Route() {
   return (
     <NavigationContainer>
-      <Stack.Navigator screenOptions={{headerShown: false}}>
+      <Stack.Navigator initialRouteName='BottomTab' screenOptions={{headerShown: false}}>
         <Stack.Screen name="Splash" component={Splash} />
         <Stack.Screen name="SignIn" component={SignIn} />
         <Stack.Screen name="FirstScreen" component={FirstScreen} />
@@ -27,7 +28,7 @@ export default function Route() {
         <Stack.Screen name="CreatAcc" component={CreatAcc} />
         <Stack.Screen name="ForgotPass" component={ForgotPass} />
         <Stack.Screen name="OtpVerify" component={OtpVerify} />
-        <Stack.Screen name="BottomTab" component={BottomTabs} />
+        <Stack.Screen name="BottomTab" component={BottomTab} />
       </Stack.Navigator>
     </NavigationContainer>
   );
