@@ -57,5 +57,8 @@ const Colors = {
   darkPlum: 'darkplum',
   lightGold: 'lightgold',
   SkipButton: '#2D39C3',
+  trip: '#4955E6',
+  textB: '#3E3E54',
+  lightGT: '#737373',
 };
 export default Colors;

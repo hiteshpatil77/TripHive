@@ -31,5 +31,17 @@ const Icons = {
   Star: require('../assets/Icon/Star.png'),
   White: require('../assets/Icon/White.png'),
   errowe: require('../assets/Icon/errowe.png'),
+  Booking: require('../assets/Images/Booking.png'),
+  PlaneRide: require('../assets/Images/Planeride.png'),
+  WhiteBG: require('../assets/Images/WhiteB.png'),
+  Sharing: require('../assets/Images/Sharing.png'),
+  Explore1: require('../assets/Icon/Explore.png'),
+  Bag: require('../assets/Icon/Bag.png'),
+  OverView: require('../assets/Icon/OverView.png'),
+  daywise: require('../assets/Icon/daywise.png'),
+  close: require('../assets/Icon/X.png'),
+  Plus: require('../assets/Icon/Plus.png'),
+  Mine: require('../assets/Icon/Subtract.png'),
+  add: require('../assets/Icon/addtile.png'),
 };
 export default Icons;

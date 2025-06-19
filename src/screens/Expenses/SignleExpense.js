@@ -23,7 +23,7 @@ export default function SignleExpense({navigation}) {
       id: 1,
       // logo: 'home-filled',
       name: 'Party Club”',
-      Paid: 'you owes',
+      Paid: 'you owe',
       user: 'Varun',
       RS: '₹999.00',
       Date: '20/08/2024 - 20:40',
@@ -108,7 +108,9 @@ export default function SignleExpense({navigation}) {
             />
             {/* <Text style={{fontWeight}}></Text> */}
           </View>
-          <TouchableOpacity style={{marginBottom: HP(3)}}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Friends')}
+            style={{marginBottom: HP(3)}}>
             <Image
               source={Icons.Setting}
               style={{height: HP(3), width: WP(5), resizeMode: 'contain'}}
@@ -139,7 +141,7 @@ export default function SignleExpense({navigation}) {
                 padding: HP(0.5),
                 fontSize: FS(1.3),
               }}
-              children={'Settele Up'}
+              children={'Settle Up'}
             />
           </TouchableOpacity>
           <TouchableOpacity
@@ -178,7 +180,7 @@ export default function SignleExpense({navigation}) {
           /> */}
           {activity.map(item => (
             <TouchableOpacity
-              onPress={() => navigation.navigate('TripDetails', {item})}
+              onPress={() => navigation.navigate('ShowSplit', {item})}
               style={{
                 flexDirection: 'row',
                 height: HP(8.5),
@@ -216,7 +218,7 @@ export default function SignleExpense({navigation}) {
                     style={{
                       fontSize: FS(1.3),
                       color: '#A2A2A2',
-                      marginVertical: HP(0.4),
+                      marginVertical: HP(0.2),
                     }}>
                     {item.user} Paid {item.RS}
                   </CustomText>

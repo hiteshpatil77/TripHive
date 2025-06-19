@@ -8,6 +8,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Modal,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import {FS, HP, WP} from '../../utils/Dimention';
@@ -22,6 +23,15 @@ import Fonts from '../../theme/Fonts';
 
 export default function ExpensesScreen({navigation}) {
   const [activeTab, setActiveTab] = useState('Friends');
+  const [isFilterModalVisible, setFilterModalVisible] = useState(false);
+  const [selectedFilter, setSelectedFilter] = useState('Everyone');
+
+  const filterOptions = [
+    'Everyone',
+    'They owe me',
+    'I owe them',
+    'Pending Balances',
+  ];
 
   const friends = [
     {
@@ -64,9 +74,9 @@ export default function ExpensesScreen({navigation}) {
     },
     {
       logo: 'flight-takeoff',
-      name: 'ABC Randon Group',
+      name: 'Test Group',
       RS: 'you are owed 59.00',
-      Tag: 'you owes Varun 999',
+      Tag: 'you owes Varun 59',
     },
   ];
 
@@ -165,7 +175,7 @@ export default function ExpensesScreen({navigation}) {
   const renderGroups = () =>
     groups.map((item, index) => (
       <TouchableOpacity
-        onPress={() => navigation.navigate('ShowSplit')}
+        onPress={() => navigation.navigate('TripDetails', {item})}
         style={{
           flexDirection: 'row',
           height: HP(8),
@@ -201,6 +211,7 @@ export default function ExpensesScreen({navigation}) {
   const renderActivity = () =>
     activity.map((item, index) => (
       <TouchableOpacity
+        onPress={() => navigation.navigate('ShowSplit', {item})}
         style={{
           flexDirection: 'row',
           height: HP(8),
@@ -256,7 +267,7 @@ export default function ExpensesScreen({navigation}) {
 
   return (
     <View style={{flex: 1, backgroundColor: '#fff'}}>
-      <StatusBar barStyle={'dark-content'} backgroundColor={'#FF754D'} />
+      {/* <StatusBar barStyle={'dark-content'} backgroundColor={'#FF754D'} /> */}
 
       {/* Translucent Status Bar */}
 
@@ -401,7 +412,10 @@ export default function ExpensesScreen({navigation}) {
                       size={15}
                       style={{marginRight: WP(2), color: '#8E8E8E'}}
                     />
-                    <TextInput placeholder="Search Activity" />
+                    <TextInput
+                      placeholder="Search Activity"
+                      placeholderTextColor="#868686"
+                    />
                   </View>
                 ) : (
                   <View style={{flexDirection: 'row', marginVertical: HP(1)}}>
@@ -415,9 +429,10 @@ export default function ExpensesScreen({navigation}) {
                           color: '#9E9E9E',
                           fontSize: FS(1.5),
                         }}
-                        children={'Sort by'}
+                        children={'Filters'}
                       />
-                      <TouchableOpacity style={{}}>
+                      <TouchableOpacity
+                        onPress={() => setFilterModalVisible(true)}>
                         <Ionicons
                           style={{position: 'absolute', left: WP(2)}}
                           name="chevron-down"
@@ -426,7 +441,7 @@ export default function ExpensesScreen({navigation}) {
                         />
                       </TouchableOpacity>
                     </View>
-                    <View
+                    {/* <View
                       style={{
                         flexDirection: 'row',
                         width: WP(20),
@@ -447,7 +462,7 @@ export default function ExpensesScreen({navigation}) {
                           color="orange"
                         />
                       </TouchableOpacity>
-                    </View>
+                    </View> */}
                   </View>
                 )}
               </View>
@@ -458,7 +473,17 @@ export default function ExpensesScreen({navigation}) {
                 />
               ) : activeTab === 'Friends' ? null : (
                 <CustomText
-                  children={'Showing groups with outstanding balances'}
+                  children={
+                    activeTab === 'Groups'
+                      ? selectedFilter === 'Everyone'
+                        ? 'All Groups'
+                        : selectedFilter === 'They owe me'
+                        ? 'Groups who owe you'
+                        : selectedFilter === 'I owe them'
+                        ? 'Groups you owe'
+                        : 'Pending Balances'
+                      : 'Showing groups with outstanding balances'
+                  }
                   style={{color: '#ADADAD', marginTop: HP(1)}}
                 />
               )}
@@ -499,10 +524,20 @@ export default function ExpensesScreen({navigation}) {
         </View>
       </ScrollView>
       {/* Fixed Button */}
-      <TouchableOpacity onPress={() => navigation.navigate('AddExpense')}>
+      <TouchableOpacity
+        onPress={() => navigation.navigate('AddExpense')}
+        style={{
+          position: 'absolute',
+          bottom: HP(2),
+          right: WP(2),
+          width: HP(12),
+          height: HP(12),
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 999,
+        }}>
         <Image
           source={Icons.Button}
-          // eslint-disable-next-line react-native/no-inline-styles
           style={{
             height: HP(12),
             width: WP(12),
@@ -513,8 +548,94 @@ export default function ExpensesScreen({navigation}) {
           }}
         />
       </TouchableOpacity>
+
+      <Modal
+        animationType="none"
+        transparent={true}
+        visible={isFilterModalVisible}
+        onRequestClose={() => setFilterModalVisible(false)}>
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPressOut={() => setFilterModalVisible(false)}>
+          <View
+            style={styles.modalContainer}
+            onStartShouldSetResponder={() => true}>
+            <CustomText style={styles.modalTitle} children="Filter" />
+
+            {filterOptions.map(option => (
+              <TouchableOpacity
+                key={option}
+                style={styles.modalOption}
+                onPress={() => {
+                  setSelectedFilter(option);
+                  setFilterModalVisible(false);
+                }}>
+                <CustomText
+                  style={{
+                    fontSize: FS(1.8),
+                    color: '#3E3E54',
+                  }}
+                  children={option}
+                />
+                <View
+                  style={[
+                    styles.radioButton,
+                    selectedFilter === option && styles.radioButtonSelected,
+                  ]}
+                />
+              </TouchableOpacity>
+            ))}
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 }
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+  },
+  modalContainer: {
+    position: 'absolute',
+    top: HP(25),
+    left: WP(8),
+    width: WP(60),
+    backgroundColor: '#F0F0F0',
+    borderRadius: HP(1.5),
+    padding: HP(2),
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: FS(2.2),
+    color: '#343a40',
+    fontFamily: Fonts.MontserratBold,
+    marginBottom: HP(2),
+  },
+  modalOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: HP(1.5),
+  },
+  radioButton: {
+    width: WP(5),
+    height: WP(5),
+    borderRadius: WP(2.5),
+    borderWidth: 1,
+    borderColor: '#ced4da',
+    backgroundColor: '#fff',
+  },
+  radioButtonSelected: {
+    backgroundColor: '#FC7916',
+    borderColor: '#FC7916',
+  },
+});

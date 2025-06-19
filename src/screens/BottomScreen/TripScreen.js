@@ -13,16 +13,13 @@ import {
   View,
 } from 'react-native';
 import React, {useState} from 'react';
-import MainView from '../../components/MainView';
 import Icons from '../../theme/Icons';
 import {FS, HP, WP} from '../../utils/Dimention';
 import Icon from 'react-native-vector-icons/FontAwesome6';
-import EvilIcons from 'react-native-vector-icons/EvilIcons';
 import Colors from '../../theme/Color';
 import CustomText from '../../components/CustomText';
 import LinearGradient from 'react-native-linear-gradient';
 import Fonts from '../../theme/Fonts';
-import SearchModal from '../../components/modal/SearchModal';
 
 export default function TripScreen({navigation}) {
   const [modalVisible, setModalVisible] = useState(false);
@@ -96,7 +93,7 @@ export default function TripScreen({navigation}) {
     },
     {
       Pic: Icons.Travel,
-      Tag: 'Kashmir Great Lakes',
+      Tag: 'Kashmir Great',
       place: 'Machu Picchu, Peru',
       Money: '15,999',
     },
@@ -169,10 +166,12 @@ export default function TripScreen({navigation}) {
 
   const UniqueFun = ({item}) => (
     <TouchableOpacity
+      onPress={() => navigation.navigate('Overview')}
       style={{
         // alignSelf: 'flex-start',
         alignItems: 'center',
         marginRight: WP(6),
+        marginTop: HP(1),
       }}>
       <Image
         style={{
@@ -188,7 +187,7 @@ export default function TripScreen({navigation}) {
       <View
         style={{
           left: HP(0),
-          backgroundColor: 'black',
+          backgroundColor: '#2D2D2D',
           position: 'absolute',
           bottom: 1,
           height: HP(9),
@@ -227,6 +226,7 @@ export default function TripScreen({navigation}) {
   );
   const Upcoming = ({item}) => (
     <TouchableOpacity
+      onPress={() => navigation.navigate('Overview')}
       style={{
         // alignSelf: 'flex-start',
         alignItems: 'center',
@@ -246,7 +246,7 @@ export default function TripScreen({navigation}) {
       <View
         style={{
           left: HP(0),
-          backgroundColor: 'black',
+          backgroundColor: '#2D2D2D',
           position: 'absolute',
           bottom: 1,
           height: HP(7),
@@ -277,19 +277,23 @@ export default function TripScreen({navigation}) {
 
   const renderExperiences = ({item}) => (
     <TouchableOpacity
+      onPress={() => navigation.navigate('Overview')}
       style={{
         // alignSelf: 'flex-start',
         alignItems: 'center',
-        marginRight: WP(6),
-        elevation: 5,
+        marginRight: WP(3),
+        elevation: 10,
+        // backgroundColor: 'red',
+        borderRadius: HP(1.4),
       }}>
       <Image
         style={{
           height: HP(20),
-          width: WP(40),
+          width: WP(32),
           // resizeMode: 'contain',
-          marginVertical: HP(1),
+          // marginVertical: HP(1),
           borderRadius: HP(1.5),
+          // marginRight: HP(1),
           // backgroundColor: 'red',
         }}
         source={item.Pic}
@@ -299,9 +303,9 @@ export default function TripScreen({navigation}) {
           left: HP(0),
           backgroundColor: '#fff',
           position: 'absolute',
-          bottom: 1,
+          bottom: -1,
           height: HP(6),
-          width: WP(40),
+          width: WP(32),
           padding: HP(0.8),
           borderBottomEndRadius: HP(1),
           borderBottomLeftRadius: HP(1),
@@ -309,7 +313,7 @@ export default function TripScreen({navigation}) {
         <CustomText
           children={item.Tag}
           style={{
-            fontSize: HP(1.5),
+            fontSize: HP(1.4),
             color: '#525252',
             fontFamily: Fonts.MontserratBold,
           }}
@@ -360,19 +364,20 @@ export default function TripScreen({navigation}) {
   ];
   const renderTrending = ({item}) => (
     <TouchableOpacity
+      onPress={() => navigation.navigate('Overview')}
       style={{
         position: 'relative',
         marginRight: WP(3),
         width: WP(90),
         backgroundColor: '#fff',
         alignItems: 'center',
-        height: HP(26),
+        height: HP(28),
         borderRadius: HP(2),
       }}>
       <Image
         source={item.Pic}
         style={{
-          height: HP(16),
+          height: HP(17),
           width: WP(85),
           marginTop: HP(1),
           borderRadius: HP(2),
@@ -411,88 +416,92 @@ export default function TripScreen({navigation}) {
     </TouchableOpacity>
   );
   return (
-    <ScrollView>
-      <StatusBar barStyle={'dark-content'} backgroundColor={'white'} />
-      <View>
-        <Image
-          source={Icons.image}
-          style={{height: HP(20), width: WP(100), bottom: HP(1)}}
-        />
-      </View>
-      <View
-        style={{
-          flexDirection: 'row',
-          position: 'absolute',
-          justifyContent: 'space-between',
-          width: WP(95),
-          alignSelf: 'center',
-          alignItems: 'center',
-          top: HP(3),
-        }}>
-        <Image
-          style={{resizeMode: 'contain', height: HP(4)}}
-          source={Icons.Logo}
-        />
-        <Image
-          style={{
-            height: HP(8),
-            width: HP(8),
-            borderRadius: HP(5),
-            backgroundColor: 'red',
-            marginRight: WP(2),
-          }}
-        />
-      </View>
-      <View
-        style={{
-          // flexDirection: 'row',
-          position: 'absolute',
-          top: HP(13),
-          left: WP(5),
-          // alignItems: 'center',
-          backgroundColor: '#fff',
-          borderRadius: HP(1.2),
-          width: WP(40),
-          height: HP(8),
-          elevation: 10,
-        }}>
+    <View style={{backgroundColor: '#fff'}}>
+      <ScrollView style={{}}>
+        <StatusBar barStyle={'dark-content'} backgroundColor={'white'} />
+        <View>
+          <Image
+            source={Icons.image}
+            style={{height: HP(20), width: WP(100), bottom: HP(1)}}
+          />
+        </View>
         <View
           style={{
             flexDirection: 'row',
-            marginLeft: HP(1.7),
-            marginTop: HP(1),
+            position: 'absolute',
+            justifyContent: 'space-between',
+            width: WP(95),
+            alignSelf: 'center',
+            alignItems: 'center',
+            top: HP(3),
           }}>
-          <Icon name="location-dot" color="#494949" size={14} />
+          <Image
+            style={{resizeMode: 'contain', height: HP(4)}}
+            source={Icons.Logo}
+          />
+          <Image
+            style={{
+              height: HP(8),
+              width: HP(8),
+              borderRadius: HP(5),
+              backgroundColor: 'red',
+              marginRight: WP(2),
+              top: HP(5),
+              borderWidth: 3,
+              borderColor: '#fff',
+            }}
+          />
+        </View>
+        <View
+          style={{
+            // flexDirection: 'row',
+            position: 'absolute',
+            top: HP(13),
+            left: WP(5),
+            // alignItems: 'center',
+            backgroundColor: '#fff',
+            borderRadius: HP(1.2),
+            width: WP(40),
+            height: HP(8),
+            elevation: 10,
+          }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              marginLeft: HP(1.7),
+              marginTop: HP(1),
+            }}>
+            <Icon name="location-dot" color="#494949" size={14} />
+            <CustomText
+              style={{color: '#494949', marginLeft: WP(2), fontSize: FS(1)}}>
+              You are in Goa
+            </CustomText>
+          </View>
           <CustomText
-            style={{color: '#494949', marginLeft: WP(2), fontSize: FS(1)}}>
-            You are in Goa
+            style={{
+              fontSize: FS(3),
+              color: '#494949',
+              fontFamily: Fonts.MontserratBold,
+              marginLeft: WP(4),
+            }}>
+            My Trips
           </CustomText>
         </View>
-        <CustomText
+        {/* <SearchModal closeModal={closeModal} modalVisible={modalVisible} /> */}
+        <View
+          onPress={openModal}
           style={{
-            fontSize: FS(3),
-            color: '#494949',
-            fontFamily: Fonts.MontserratBold,
-            marginLeft: WP(4),
+            // backgroundColor: Colors.white,
+            width: WP(85),
+            alignSelf: 'center',
+            borderRadius: HP(1),
+            height: HP(4),
+            // justifyContent: 'center',
+            // bottom: HP(3),
           }}>
-          My Trips
-        </CustomText>
-      </View>
-      {/* <SearchModal closeModal={closeModal} modalVisible={modalVisible} /> */}
-      <View
-        onPress={openModal}
-        style={{
-          // backgroundColor: Colors.white,
-          width: WP(85),
-          alignSelf: 'center',
-          borderRadius: HP(1),
-          height: HP(4),
-          // justifyContent: 'center',
-          // bottom: HP(3),
-        }}>
-        {/* <CustomText children={'hey ABC, Where do you want ro go?'} /> */}
-      </View>
-      {/* <View
+          {/* <CustomText children={'hey ABC, Where do you want ro go?'} /> */}
+        </View>
+        {/* <View
         style={{
           width: WP(95),
           alignSelf: 'flex-end',
@@ -507,224 +516,240 @@ export default function TripScreen({navigation}) {
           />
         </View>
       </View> */}
-      <View
-        style={{
-          width: WP(95),
-          alignSelf: 'flex-end',
-        }}>
-        <CustomText style={{fontSize: FS(2), fontFamily: Fonts.MontserratBold}}>
-          Ongoing trip
-        </CustomText>
-        <View style={{marginTop: HP(2)}}>
+        <View
+          style={{
+            width: WP(95),
+            alignSelf: 'flex-end',
+          }}>
+          <CustomText
+            style={{
+              fontSize: FS(2),
+              fontFamily: Fonts.MontserratBold,
+              top: HP(1),
+            }}>
+            Ongoing trip
+          </CustomText>
+          <View style={{marginTop: HP(2)}}>
+            <FlatList
+              data={TrendingData}
+              renderItem={renderTrending}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+            />
+          </View>
+        </View>
+        <View
+          style={{
+            width: WP(95),
+            alignSelf: 'flex-end',
+            marginTop: HP(2),
+            // position: 'relative',
+          }}>
+          <View
+            style={{
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexDirection: 'row',
+              width: WP(90),
+              marginTop: HP(2),
+            }}>
+            <CustomText
+              children={'Upcoming Planned'}
+              style={{
+                fontSize: FS(2),
+                fontFamily: Fonts.MontserratBold,
+                // marginTop: HP(3),
+              }}
+            />
+            <TouchableOpacity>
+              <CustomText children={'See All'} />
+            </TouchableOpacity>
+          </View>
           <FlatList
-            data={TrendingData}
-            renderItem={renderTrending}
+            data={UpcomingData}
+            renderItem={Upcoming}
             horizontal
             showsHorizontalScrollIndicator={false}
           />
         </View>
-      </View>
-      <View
-        style={{
-          width: WP(95),
-          alignSelf: 'flex-end',
-          // marginTop: HP(1),
-          // position: 'relative',
-        }}>
-        <View
+        <TouchableOpacity
           style={{
-            justifyContent: 'space-between',
+            backgroundColor: '#4955E6',
             alignItems: 'center',
-            flexDirection: 'row',
-            width: WP(90),
-            marginTop: HP(2),
+            justifyContent: 'center',
+            width: WP(85),
+            alignSelf: 'center',
+            marginTop: HP(4),
+            height: HP(5),
+            borderRadius: HP(5),
           }}>
           <CustomText
-            children={'Upcoming Planned'}
             style={{
-              fontSize: FS(2),
+              color: '#fff',
               fontFamily: Fonts.MontserratBold,
-              // marginTop: HP(3),
+              fontSize: FS(2),
             }}
+            children={'Plan a new trip'}
           />
-          <TouchableOpacity>
-            <CustomText children={'See All'} />
+        </TouchableOpacity>
+        <View
+          style={{
+            height: HP(13),
+            width: WP(90),
+            alignSelf: 'center',
+            backgroundColor: '#e6e3e3',
+            marginTop: HP(4),
+            borderRadius: HP(1.5),
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+          <CustomText
+            style={{
+              fontSize: FS(2.3),
+              fontFamily: Fonts.MontserratBold,
+              color: Colors.textB,
+            }}
+            children={'Plan with our Hive AI'}
+          />
+          <CustomText
+            style={{fontSize: FS(1.2), color: Colors.gray}}
+            children={'Advance Tailored Plans for you within seconds'}
+          />
+          <TouchableOpacity onPress={() => navigation.navigate('CreatTrip')}>
+            <LinearGradient
+              colors={['#FF9F15', '#FD7A16', '#FD7A16', '#FD7A16']}
+              start={{x: 0, y: 0}}
+              end={{x: 1, y: 0}}
+              style={{
+                borderRadius: HP(1),
+                // padding: HP(1),
+                paddingHorizontal: HP(2.5),
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: WP(30),
+                height: HP(3.5),
+                marginTop: HP(1),
+              }}>
+              <CustomText
+                style={{
+                  color: Colors.white,
+                  fontSize: FS(2),
+                  fontWeight: 'bold',
+                }}>
+                Let's Go
+              </CustomText>
+            </LinearGradient>
           </TouchableOpacity>
         </View>
-        <FlatList
-          data={UpcomingData}
-          renderItem={Upcoming}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-        />
-      </View>
-      <TouchableOpacity
-        style={{
-          backgroundColor: '#4955E6',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: WP(85),
-          alignSelf: 'center',
-          marginTop: HP(3),
-          height: HP(5),
-          borderRadius: HP(5),
-        }}>
-        <CustomText
+        <View
           style={{
-            color: '#fff',
-            fontFamily: Fonts.MontserratBold,
-            fontSize: FS(2),
-          }}
-          children={'Plan a new trip'}
-        />
-      </TouchableOpacity>
-      <View
-        style={{
-          height: HP(13),
-          width: WP(90),
-          alignSelf: 'center',
-          backgroundColor: '#E9E9E9',
-          marginTop: HP(2),
-          borderRadius: HP(2),
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}>
-        <CustomText
-          style={{fontSize: FS(2), fontWeight: 'bold'}}
-          children={'Plan with our Hive AI'}
-        />
-        <CustomText
-          style={{fontSize: FS(1), color: Colors.gray, marginTop: HP(1)}}
-          children={'Advance Tailored Plans for you within seconds'}
-        />
-        <TouchableOpacity>
-          <LinearGradient
-            colors={['#FF9F15', '#FD7A16', '#FD7A16', '#FD7A16']}
-            start={{x: 0, y: 0}}
-            end={{x: 1, y: 0}}
+            // marginTop: HP(2),
+            width: WP(95),
+            // backgroundColor: 'red',
+            alignSelf: 'flex-end',
+            marginTop: HP(1),
+          }}>
+          <View
             style={{
-              borderRadius: HP(1),
-              // padding: HP(1),
-              paddingHorizontal: HP(2.5),
+              justifyContent: 'space-between',
               alignItems: 'center',
-              justifyContent: 'center',
-              width: WP(30),
-              height: HP(3.5),
-              marginTop: HP(1),
+              flexDirection: 'row',
+              width: WP(90),
+              marginTop: HP(3),
+              marginVertical: HP(1),
             }}>
             <CustomText
+              children={'Past Trips'}
               style={{
-                color: Colors.white,
                 fontSize: FS(2),
-                fontWeight: 'bold',
-              }}>
-              Let's Go
-            </CustomText>
-          </LinearGradient>
+                fontFamily: Fonts.MontserratBold,
+              }}
+            />
+            <TouchableOpacity>
+              <CustomText children={'See All'} />
+            </TouchableOpacity>
+          </View>
+        </View>
+        <View style={{width: WP(90), alignSelf: 'center'}}>
+          <FlatList
+            showsHorizontalScrollIndicator={false}
+            data={Experiences}
+            renderItem={renderExperiences}
+            horizontal
+          />
+        </View>
+        <View
+          style={{
+            width: WP(95),
+            alignSelf: 'flex-end',
+            // marginTop: HP(1),
+            // position: 'relative',
+          }}>
+          <View
+            style={{
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexDirection: 'row',
+              width: WP(90),
+              marginTop: HP(3),
+            }}>
+            <CustomText
+              children={'Curated Trips for you'}
+              style={{
+                fontSize: FS(2),
+                fontFamily: Fonts.MontserratBold,
+                // marginTop: HP(3),
+              }}
+            />
+            <TouchableOpacity>
+              <CustomText children={'See All'} />
+            </TouchableOpacity>
+          </View>
+          <FlatList
+            data={Unique}
+            renderItem={UniqueFun}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+          />
+        </View>
+        <TouchableOpacity
+          style={{
+            backgroundColor: '#4955E6',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: WP(85),
+            alignSelf: 'center',
+            marginTop: HP(3),
+            height: HP(5),
+            borderRadius: HP(5),
+            // zIndex: 1,
+          }}>
+          <CustomText
+            style={{
+              color: '#fff',
+              fontFamily: Fonts.MontserratBold,
+              fontSize: FS(2),
+            }}
+            children={'Plan a new trip'}
+          />
         </TouchableOpacity>
-      </View>
-      <View
-        style={{
-          // marginTop: HP(2),
-          width: WP(95),
-          // backgroundColor: 'red',
-          alignSelf: 'flex-end',
-          marginTop: HP(1),
-        }}>
         <View
           style={{
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexDirection: 'row',
+            height: HP(8),
             width: WP(90),
+            alignSelf: 'center',
             marginTop: HP(2),
-            marginVertical: HP(1),
-          }}>
-          <CustomText
-            children={'Past Trips'}
-            style={{
-              fontSize: FS(2),
-              fontFamily: Fonts.MontserratBold,
-              // marginTop: HP(3),
-            }}
-          />
-          <TouchableOpacity>
-            <CustomText children={'See All'} />
-          </TouchableOpacity>
-        </View>
-      </View>
-      <View style={{width: WP(90), alignSelf: 'center'}}>
-        <FlatList
-          showsHorizontalScrollIndicator={false}
-          data={Experiences}
-          renderItem={renderExperiences}
-          horizontal
-        />
-      </View>
-      <View
+          }}></View>
+      </ScrollView>
+      <Image
+        source={Icons.WhiteBG}
         style={{
-          width: WP(95),
-          alignSelf: 'flex-end',
-          // marginTop: HP(1),
-          // position: 'relative',
-        }}>
-        <View
-          style={{
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexDirection: 'row',
-            width: WP(90),
-            marginTop: HP(2),
-          }}>
-          <CustomText
-            children={'Curated Trips for you'}
-            style={{
-              fontSize: FS(2),
-              fontFamily: Fonts.MontserratBold,
-              // marginTop: HP(3),
-            }}
-          />
-          <TouchableOpacity>
-            <CustomText children={'See All'} />
-          </TouchableOpacity>
-        </View>
-        <FlatList
-          data={Unique}
-          renderItem={UniqueFun}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-        />
-      </View>
-      <TouchableOpacity
-        style={{
-          backgroundColor: '#4955E6',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: WP(85),
-          alignSelf: 'center',
-          marginTop: HP(3),
-          height: HP(5),
-          borderRadius: HP(5),
-        }}>
-        <CustomText
-          style={{
-            color: '#fff',
-            fontFamily: Fonts.MontserratBold,
-            fontSize: FS(2),
-          }}
-          children={'Plan a new trip'}
-        />
-      </TouchableOpacity>
-      <View
-        style={{
-          height: HP(8),
-          width: WP(90),
-          alignSelf: 'center',
-          // backgroundColor: 'white',
-          marginTop: HP(2),
-          // paddingBottom: HP(10),
-        }}></View>
-    </ScrollView>
+          position: 'absolute',
+          bottom: HP(0),
+          resizeMode: 'cover',
+        }}
+      />
+    </View>
   );
 }
 

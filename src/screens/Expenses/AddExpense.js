@@ -5,8 +5,9 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Modal,
 } from 'react-native';
-import React from 'react';
+import React, {useState} from 'react';
 import {FS, HP, WP} from '../../utils/Dimention';
 import CustomText from '../../components/CustomText';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -14,6 +15,22 @@ import Entypo from 'react-native-vector-icons/Entypo';
 import Fonts from '../../theme/Fonts';
 
 export default function AddExpense({navigation}) {
+  const [selectedCurrency, setSelectedCurrency] = useState({
+    symbol: '₹',
+    code: 'INR',
+  });
+  const [showCurrencyModal, setShowCurrencyModal] = useState(false);
+
+  const currencies = [
+    {symbol: '₹', code: 'INR'},
+    {symbol: '$', code: 'USD'},
+    {symbol: '€', code: 'EUR'},
+    {symbol: '£', code: 'GBP'},
+    {symbol: '¥', code: 'JPY'},
+    {symbol: 'S$', code: 'SGD'},
+    // {symbol: 'HK$', code: 'HKD'},
+  ];
+
   return (
     <SafeAreaView style={{flex: 1}}>
       <View style={{backgroundColor: '#FF754D', height: HP(8)}}>
@@ -91,32 +108,104 @@ export default function AddExpense({navigation}) {
             }}
           />
           <View style={{flexDirection: 'row', alignItems: 'center'}}>
-            <View
-              style={{
-                backgroundColor: '#ECECEC',
-                borderRadius: HP(1),
-                marginRight: HP(1),
-              }}>
-              <CustomText
-                children={'₹'}
-                style={{
-                  fontSize: FS(2.5),
-                  padding: HP(0.5),
-                  paddingHorizontal: HP(2),
-                  color: '#4955E6',
-                  fontFamily: Fonts.MontserratBold,
-                }}
-              />
-            </View>
             <TextInput
+              keyboardType="number-pad"
               style={{
                 backgroundColor: '#ECECEC',
                 borderRadius: HP(1.2),
                 marginVertical: HP(1),
-                width: WP(72.5),
+                width: WP(60),
+                paddingHorizontal: HP(2),
               }}
             />
+            <TouchableOpacity
+              onPress={() => setShowCurrencyModal(true)}
+              style={{
+                backgroundColor: '#ECECEC',
+                borderRadius: HP(1),
+                marginRight: HP(1),
+                flexDirection: 'row',
+                alignItems: 'center',
+                paddingHorizontal: HP(1),
+                marginHorizontal: HP(2),
+                height: HP(5),
+              }}>
+              <CustomText
+                children={`${selectedCurrency.code} ${selectedCurrency.symbol}`}
+                style={{
+                  fontSize: FS(2),
+                  padding: HP(0.5),
+                  color: '#4955E6',
+                  fontFamily: Fonts.MontserratBold,
+                }}
+              />
+              <Ionicons
+                name={'chevron-down'}
+                color={'#4955E6'}
+                size={16}
+                style={{marginLeft: 5}}
+              />
+            </TouchableOpacity>
           </View>
+          <Modal
+            visible={showCurrencyModal}
+            transparent={true}
+            animationType="slide"
+            onRequestClose={() => setShowCurrencyModal(false)}>
+            <View
+              style={{
+                flex: 1,
+                justifyContent: 'flex-end',
+              }}>
+              <View
+                style={{
+                  backgroundColor: 'white',
+                  borderTopLeftRadius: HP(2),
+                  borderTopRightRadius: HP(2),
+                  padding: HP(2),
+                  shadowColor: '#000',
+                  shadowOffset: {
+                    width: 0,
+                    height: -2,
+                  },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 3,
+                  elevation: 5,
+                }}>
+                <View style={{
+                  width: WP(15),
+                  height: HP(0.5),
+                  backgroundColor: '#E0E0E0',
+                  alignSelf: 'center',
+                  marginBottom: HP(2),
+                  borderRadius: HP(0.25),
+                }} />
+                {currencies.map((currency, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={{
+                      paddingVertical: HP(1.5),
+                      borderBottomWidth:
+                        index === currencies.length - 1 ? 0 : 1,
+                      borderBottomColor: '#ECECEC',
+                    }}
+                    onPress={() => {
+                      setSelectedCurrency(currency);
+                      setShowCurrencyModal(false);
+                    }}>
+                    <CustomText
+                      style={{
+                        fontFamily: Fonts.MontserratBold,
+                        fontSize: FS(1.8),
+                        color: '#3E3E54',
+                      }}>
+                      {currency.code} {currency.symbol}
+                    </CustomText>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          </Modal>
           <CustomText
             children={'Paid by'}
             style={{

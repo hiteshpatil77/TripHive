@@ -1,11 +1,11 @@
 import {
-  FlatList,
   Image,
   SafeAreaView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
+  ScrollView,
 } from 'react-native';
 import React from 'react';
 import {FS, HP, WP} from '../../utils/Dimention';
@@ -16,50 +16,63 @@ import LinearGradient from 'react-native-linear-gradient';
 import Fonts from '../../theme/Fonts';
 
 export default function Friends({navigation}) {
-  const [activity, setActivity] = React.useState([
+  const activity = [
     {id: 1, name: 'Expenses', color: '#C09FF8'},
     {id: 2, name: 'Shared Trips', color: '#F89F9F'},
     {id: 3, name: 'Groups', color: '#F8DA9F'},
     {id: 4, name: 'Curated Trips', color: '#9FF8A8'},
-  ]);
-  const renderFriends = ({item}) => (
-    <TouchableOpacity
-      style={{
-        height: HP(18),
-        width: WP(40),
-        backgroundColor: item.color,
-        borderRadius: HP(3),
-        margin: WP(2),
-      }}
-      key={item.id.toString()}>
-      <Image
-        source={Icons.errowe}
+  ];
+
+  const renderActivityCards = () => {
+    return (
+      <View
         style={{
-          position: 'absolute',
-          right: HP(2),
-          height: HP(4),
-          width: WP(4),
-          resizeMode: 'contain',
-          top: HP(1.5),
-        }}
-      />
-      <CustomText
-        children={item.name}
-        style={{
-          position: 'absolute',
-          bottom: HP(1),
-          left: HP(2),
-          fontSize: FS(2),
-          fontFamily: Fonts.MontserratMedium,
-        }}
-      />
-    </TouchableOpacity>
-  );
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+          justifyContent: 'center',
+          paddingHorizontal: WP(2),
+        }}>
+        {activity.map(item => (
+          <TouchableOpacity
+            key={item.id}
+            style={{
+              height: HP(18),
+              width: WP(40),
+              backgroundColor: item.color,
+              borderRadius: HP(3),
+              margin: WP(2),
+            }}>
+            <Image
+              source={Icons.errowe}
+              style={{
+                position: 'absolute',
+                right: HP(2),
+                height: HP(4),
+                width: WP(4),
+                resizeMode: 'contain',
+                top: HP(1.5),
+              }}
+            />
+            <CustomText
+              children={item.name}
+              style={{
+                position: 'absolute',
+                bottom: HP(1),
+                left: HP(2),
+                fontSize: FS(2),
+                fontFamily: Fonts.MontserratMedium,
+              }}
+            />
+          </TouchableOpacity>
+        ))}
+      </View>
+    );
+  };
 
   return (
     <SafeAreaView style={{flex: 1, backgroundColor: '#fff'}}>
       <LinearGradient colors={['#FF754D', '#FF7521']}>
-        <View style={{height: HP(3)}}></View>
+        <View style={{height: HP(3)}} />
       </LinearGradient>
       {/**Header */}
       <View
@@ -99,7 +112,8 @@ export default function Friends({navigation}) {
               width: HP(11),
               borderRadius: HP(6),
               backgroundColor: Colors.gray,
-            }}></View>
+            }}
+          />
           <View
             style={{
               justifyContent: 'center',
@@ -117,7 +131,6 @@ export default function Friends({navigation}) {
             <CustomText
               style={{
                 fontSize: FS(1.7),
-                // marginVertical: HP(0.5),
                 color: '#A2A2A2',
                 fontFamily: Fonts.MontserratRegular,
               }}
@@ -126,39 +139,21 @@ export default function Friends({navigation}) {
             <CustomText
               style={{
                 fontSize: FS(1.7),
-                // marginVertical: HP(0.5),
                 color: '#A2A2A2',
                 fontFamily: Fonts.MontserratRegular,
               }}
               children={'Friends Since 1 Year '}
             />
-            {/* <CustomText
-              style={{
-                fontSize: FS(1.7),
-                // marginVertical: HP(0.5),
-                color: '#A2A2A2',
-                fontFamily: Fonts.MontserratRegular,
-              }}
-              children={'Friends Since 1 Year '}
-            /> */}
             <CustomText
               style={{
                 fontSize: FS(1.7),
-                // marginVertical: HP(0.5),
                 color: '#A2A2A2',
                 fontFamily: Fonts.MontserratRegular,
                 marginTop: HP(1),
               }}
               children={'Friends Since 1 Year '}
             />
-            {/* <Text style={{fontWeight}}></Text> */}
           </View>
-          {/* <TouchableOpacity style={{marginBottom: HP(3)}}>
-            <Image
-              source={Icons.Setting}
-              style={{height: HP(3), width: WP(5), resizeMode: 'contain'}}
-            />
-          </TouchableOpacity> */}
         </View>
         <View
           style={{
@@ -172,7 +167,6 @@ export default function Friends({navigation}) {
           }}>
           <TouchableOpacity
             style={{
-              //   backgroundColor: '#fff',
               borderRadius: WP(3),
               paddingHorizontal: WP(4),
               justifyContent: 'center',
@@ -218,22 +212,15 @@ export default function Friends({navigation}) {
           borderTopRightRadius: HP(3),
           borderTopLeftRadius: HP(3),
           bottom: HP(6),
-          justifyContent: 'center',
-          alignItems: 'center',
         }}>
-        <View
-          style={{
-            justifyContent: 'center',
-            alignItems: 'center',
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{
             paddingTop: HP(7),
+            paddingBottom: HP(2),
           }}>
-          <FlatList
-            data={activity}
-            renderItem={renderFriends}
-            numColumns={'2'}
-            keyExtractor={item => item.id.toString()}
-          />
-        </View>
+          {renderActivityCards()}
+        </ScrollView>
       </View>
     </SafeAreaView>
   );

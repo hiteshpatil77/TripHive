@@ -18,7 +18,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import Fonts from '../../theme/Fonts';
 
 export default function TripDetails({navigation, route}) {
-  // console.log('data-=', Data);
+  console.log('data-=', Data);
 
   const Data = route.params.item;
 
@@ -106,21 +106,12 @@ export default function TripDetails({navigation, route}) {
                 style={{
                   fontSize: FS(1.8),
                   marginVertical: HP(0.5),
-                  color: Data.Paid.includes('you owe') ? '#D70000' : '#00BF4C',
+                  color: Data.RS.includes('you owe') ? '#D70000' : '#00BF4C',
                   marginRight: HP(1),
-                }}
-                children={Data.user}
-              />
-              <CustomText
-                style={{
-                  fontSize: FS(1.8),
-                  marginVertical: HP(0.5),
-                  color: Data.Paid.includes('you owe') ? '#D70000' : '#00BF4C',
                 }}
                 children={Data.RS}
               />
             </View>
-            {/* <Text style={{fontWeight}}></Text> */}
           </View>
           <TouchableOpacity style={{marginBottom: HP(3)}}>
             <Image
@@ -142,20 +133,20 @@ export default function TripDetails({navigation, route}) {
             style={{
               backgroundColor: '#fff',
               borderRadius: WP(3),
-              paddingHorizontal: WP(4),
+              paddingHorizontal: WP(3),
               justifyContent: 'center',
               alignItems: 'center',
             }}>
             <CustomText
               style={{paddingVertical: HP(0.5), fontSize: FS(1.3)}}
-              children={'Settele Up'}
+              children={'Settle Up'}
             />
           </TouchableOpacity>
           <TouchableOpacity
             style={{
               backgroundColor: '#fff',
               borderRadius: WP(3),
-              paddingHorizontal: WP(4),
+              paddingHorizontal: WP(2),
               justifyContent: 'center',
               alignItems: 'center',
             }}>
@@ -168,7 +159,7 @@ export default function TripDetails({navigation, route}) {
             style={{
               backgroundColor: '#fff',
               borderRadius: WP(3),
-              paddingHorizontal: WP(4),
+              paddingHorizontal: WP(2),
               justifyContent: 'center',
               alignItems: 'center',
             }}>
@@ -181,7 +172,7 @@ export default function TripDetails({navigation, route}) {
             style={{
               backgroundColor: '#fff',
               borderRadius: WP(3),
-              paddingHorizontal: WP(4),
+              paddingHorizontal: WP(2),
               justifyContent: 'center',
               alignItems: 'center',
             }}>
@@ -204,6 +195,7 @@ export default function TripDetails({navigation, route}) {
           <CustomText style={{color: '#ADADAD'}} children={'Aug 2024'} />
           {activity.map(item => (
             <TouchableOpacity
+              onPress={() => navigation.navigate('ShowSplit')}
               style={{
                 flexDirection: 'row',
                 height: HP(8),
@@ -240,7 +232,7 @@ export default function TripDetails({navigation, route}) {
                     style={{
                       fontSize: FS(1.3),
                       color: '#ADADAD',
-                      marginVertical: HP(0.3),
+                      marginVertical: HP(0.1),
                     }}>
                     {item.user} {item.RS}
                   </CustomText>
