@@ -6,7 +6,7 @@ import CustomText from './CustomText';
 import Entypo from 'react-native-vector-icons/Entypo';
 import Fonts from '../theme/Fonts';
 
-export default function TripHeader({hearder, isVisible, navigation}) {
+export default function TripHeader({hearder, isVisible, navigation, onSettingsPress}) {
   return (
     <View
       style={{
@@ -15,6 +15,7 @@ export default function TripHeader({hearder, isVisible, navigation}) {
         width: WP(90),
         alignSelf: 'center',
         alignItems: 'center',
+        marginVertical: HP(2),
       }}>
       <TouchableOpacity
         onPress={() => navigation.goBack()}
@@ -38,7 +39,7 @@ export default function TripHeader({hearder, isVisible, navigation}) {
       </CustomText>
 
       {isVisible ? (
-        <TouchableOpacity>
+        <TouchableOpacity onPress={onSettingsPress}>
           <Image
             style={{height: HP(3.2), width: HP(3.2), resizeMode: 'contain'}}
             source={Icons.Setting}></Image>

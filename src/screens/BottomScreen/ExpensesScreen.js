@@ -20,11 +20,20 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import Fonts from '../../theme/Fonts';
+import {
+  friends,
+  friendsExpenses,
+  myFreind,
+  MyFreind,
+} from '../../api/apiService';
 
 export default function ExpensesScreen({navigation}) {
   const [activeTab, setActiveTab] = useState('Friends');
   const [isFilterModalVisible, setFilterModalVisible] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState('Everyone');
+  const [friendsData, setFriendsData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const filterOptions = [
     'Everyone',
@@ -33,37 +42,24 @@ export default function ExpensesScreen({navigation}) {
     'Pending Balances',
   ];
 
-  const friends = [
-    {
-      name: 'Rohit patil',
-      Pic: Icons.Travel,
-      Tag: 'owes you',
-      RS: '₹999.00',
-    },
-    {
-      name: 'Rohit patil',
-      Pic: Icons.Travel,
-      Tag: 'settled up',
-    },
-    {
-      name: 'Rohit patil',
-      Pic: Icons.Travel,
-      Tag: 'owes you',
-      RS: '₹999.00',
-    },
-    {
-      name: 'Rohit patil',
-      Pic: Icons.Travel,
-      Tag: 'you owes',
-      RS: '₹999.00',
-    },
-    {
-      name: 'Rohit patil',
-      Pic: Icons.Travel,
-      Tag: 'owes you',
-      RS: '₹999.00',
-    },
-  ];
+  useEffect(() => {
+    const fetchFriends = async () => {
+      try {
+        const data = await myFreind({id: '1'});
+        const Freinds = data[0]?.friends;
+        console.log('freinds-=-', Freinds);
+
+        setFriendsData(Freinds);
+      } catch (err) {
+        console.log('error-=>', err);
+
+        setError(err.message || 'Failed to fetch friends');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchFriends();
+  }, []);
 
   const groups = [
     {
@@ -113,7 +109,7 @@ export default function ExpensesScreen({navigation}) {
   };
 
   const renderFriends = (item, index) =>
-    friends.map((item, index) => (
+    friendsData.map((item, index) => (
       <TouchableOpacity
         onPress={() => navigation.navigate('SignleExpense')}
         key={index}
@@ -267,15 +263,12 @@ export default function ExpensesScreen({navigation}) {
 
   return (
     <View style={{flex: 1, backgroundColor: '#fff'}}>
-      {/* <StatusBar barStyle={'dark-content'} backgroundColor={'#FF754D'} /> */}
-
-      {/* Translucent Status Bar */}
-
       <ScrollView showsVerticalScrollIndicator={false}>
         <LinearGradient colors={['#FF754D', '#FF8A5A', '#FFA515']}>
           <View
             style={{
               height: HP(15),
+              marginTop: HP(2),
             }}>
             <View
               style={{
@@ -320,7 +313,7 @@ export default function ExpensesScreen({navigation}) {
             height: HP(8),
             position: 'absolute',
             width: WP(75),
-            top: HP(8),
+            top: HP(10),
             zIndex: 1,
             borderRadius: HP(2),
             alignItems: 'center',
@@ -365,7 +358,7 @@ export default function ExpensesScreen({navigation}) {
                 <CustomText
                   style={{
                     fontSize: FS(2),
-                    color: activeTab === tab ? '#000' : '#3E3E54',
+                    color: '#3E3E54',
                     // fontWeight: activeTab === tab ? '900' : '100',
                     marginBottom: activeTab === tab && HP(0.5),
                     fontFamily:

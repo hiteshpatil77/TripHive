@@ -61,6 +61,25 @@ export default function ExploreScreen({navigation}) {
       Tag: 'Packages',
     },
   ];
+  const Best = [
+    {
+      Pic: Icons.plane,
+      Tag: 'Flights',
+      ScreenName: 'Flight',
+    },
+    {
+      Pic: Icons.trn,
+      Tag: 'Trains',
+    },
+    {
+      Pic: Icons.BS,
+      Tag: 'Buses',
+    },
+    {
+      Pic: Icons.stys,
+      Tag: 'Stays',
+    },
+  ];
   const Explore = [
     {
       Pic: Icons.Explore,
@@ -124,6 +143,18 @@ export default function ExploreScreen({navigation}) {
     },
   ];
 
+  const BetsFun = ({item}) => (
+    <TouchableOpacity style={{marginRight: WP(4), marginTop: HP(2)}}>
+      <Image
+        style={{
+          height: HP(15),
+          width: WP(40),
+          borderRadius: HP(2),
+        }}
+        source={item.Pic}
+      />
+    </TouchableOpacity>
+  );
   const ExploreFun = ({item}) => (
     <TouchableOpacity
       style={{
@@ -131,6 +162,11 @@ export default function ExploreScreen({navigation}) {
         alignItems: 'center',
         marginRight: WP(4),
         marginTop: HP(1),
+        backgroundColor: '#FF515A',
+        borderRadius: HP(2),
+        width: WP(42),
+        height: HP(15),
+        justifyContent: 'center',
       }}>
       <Image
         style={{height: HP(17), width: HP(17), borderRadius: HP(10)}}
@@ -267,7 +303,7 @@ export default function ExploreScreen({navigation}) {
   );
   const renderBookFun = ({item}) => (
     <TouchableOpacity
-      onPress={() => navigation.navigate(item.ScreenName)}
+      // onPress={() => navigation.navigate(item.ScreenName)}
       style={{
         height: HP(11),
         width: HP(13.7),
@@ -333,8 +369,8 @@ export default function ExploreScreen({navigation}) {
     </TouchableOpacity>
   );
   return (
-    <View>
-      <ScrollView>
+    <ScrollView>
+      {/* <ScrollView>
         <StatusBar barStyle={'dark-content'} backgroundColor={'white'} />
         <View>
           <Image
@@ -648,19 +684,115 @@ export default function ExploreScreen({navigation}) {
             marginTop: HP(2),
             // paddingBottom: HP(10),
           }}></View>
-      </ScrollView>
-      <Image
+      </ScrollView> */}
+      <View style={{flex: 1}}>
+        {/* <StatusBar barStyle={'dark-content'} backgroundColor={'white'} /> */}
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            // marginTop: HP(5),
+            // backgroundColor: '#000',
+            height: HP(9),
+            borderBottomWidth: 1,
+            paddingHorizontal: WP(1),
+            borderColor: Colors.lightGray,
+          }}>
+          <Image
+            source={Icons.Logo}
+            style={{
+              resizeMode: 'contain',
+              height: HP(5),
+              // marginLeft: WP(5),
+              marginTop: HP(1),
+              tintColor: Colors.Main,
+            }}
+          />
+          <CustomText
+            style={{fontSize: FS(3), fontFamily: Fonts.MontserratExtraBold}}
+            children={'Explore'}
+          />
+          <View
+            style={{
+              height: HP(5),
+              width: HP(5),
+              borderRadius: HP(2.5),
+              // backgroundColor: 'red',
+            }}></View>
+        </View>
+        <View
+          style={{
+            // height: HP(78),
+            paddingHorizontal: HP(4),
+            marginTop: HP(2),
+            // backgroundColor: 'red',
+          }}>
+          <CustomText
+            style={{fontSize: FS(2.5), fontFamily: Fonts.MontserratBold}}
+            children={'Find Best Deals'}
+          />
+          <FlatList data={Best} renderItem={BetsFun} numColumns={2} />
+          <Image
+            source={Icons.homePlane}
+            style={{
+              height: HP(18),
+              width: WP(85),
+              resizeMode: 'contain',
+              marginTop: HP(2),
+              // tintColor: Colors.Main,
+            }}
+          />
+          <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+            <TouchableOpacity
+              style={[styles.tracking, {backgroundColor: '#FFD06B'}]}>
+              <CustomText
+                style={{
+                  padding: HP(3),
+                  fontSize: FS(2),
+                  fontFamily: Fonts.MontserratBold,
+                }}
+                children={`Live\nTracking`}
+              />
+              {/* <View style={{flex: 1, backgroundColor: '#FFD06B'}}></View> */}
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.tracking, {backgroundColor: '#80BFFF'}]}>
+              <CustomText
+                style={{
+                  padding: HP(3),
+                  fontSize: FS(2),
+                  fontFamily: Fonts.MontserratBold,
+                }}
+                children={`PNR\nStatus`}
+              />
+            </TouchableOpacity>
+          </View>
+          <View style={{height: HP(12)}}></View>
+        </View>
+      </View>
+      {/* <Image
         source={Icons.WhiteBG}
         style={{
           position: 'absolute',
           bottom: HP(0),
           resizeMode: 'cover',
         }}
-      />
-    </View>
+      /> */}
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   headerTamplete: {fontSize: FS(3), fontFamily: Fonts.MontserratBold},
+  tracking: {
+    height: HP(15),
+    width: WP(40),
+    // alignSelf: 'center',
+    // backgroundColor: Colors.lightGray,
+    marginTop: HP(3),
+    borderRadius: HP(5),
+    // alignItems: 'center',
+    // justifyContent: 'center',
+  },
 });

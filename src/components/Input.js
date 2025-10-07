@@ -35,6 +35,7 @@ export default function Input({
 }) {
   const [secureText, setSecureText] = useState(true);
   const IconComponent = getIconComponent(iconType);
+  console.log('Email=-=-', value);
 
   return (
     <View

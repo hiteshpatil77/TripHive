@@ -16,17 +16,39 @@ import Fonts from '../../theme/Fonts';
 import Colors from '../../theme/Color';
 import Icon from 'react-native-vector-icons/Feather';
 import CusButton from '../../components/CusButton';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
 
 export default function FixedDates({navigation}) {
   const [checked, setChecked] = useState(false);
   const [destinations, setDestinations] = useState([
     {place: '', date: 'Select date range'},
   ]);
+  const [isDatePickerVisible, setDatePickerVisible] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(null);
+  const showDatePicker = index => {
+    setSelectedIndex(index);
+    setDatePickerVisible(true);
+  };
+
+  const hideDatePicker = () => {
+    setDatePickerVisible(false);
+  };
+
+  const handleConfirm = date => {
+    if (selectedIndex !== null) {
+      const updated = [...destinations];
+      updated[selectedIndex].date = date.toLocaleDateString(); // cleaner format
+      setDestinations(updated);
+    }
+    hideDatePicker();
+  };
+
   const removeDestination = index => {
     const updated = [...destinations];
     updated.splice(index, 1);
     setDestinations(updated);
   };
+
   const addDestination = () => {
     setDestinations([...destinations, {place: '', date: 'Select date range'}]);
   };
@@ -46,33 +68,6 @@ export default function FixedDates({navigation}) {
             style={{resizeMode: 'center', height: HP(24)}}
           />
         </View>
-        {/* <View>
-          <CustomText
-            children={'Where to'}
-            style={{
-              fontFamily: Fonts.MontserratBold,
-              fontSize: FS(1.7),
-              color: Colors.textB,
-            }}
-          />
-          {destinations.map((destination, index) => (
-            <View
-              key={index}
-              style={{
-                backgroundColor: '#F4F4F4',
-                borderRadius: HP(0.5),
-                paddingLeft: HP(2),
-                height: HP(6),
-                justifyContent: 'center',
-              }}>
-              <TextInput
-                placeholder={`Select a location ${index + 1}`}
-                placeholderTextColor={'#737373'}
-                style={{fontSize: FS(1.5)}}
-              />
-            </View>
-          ))}
-        </View> */}
         <CustomText
           children={`Where to`}
           style={{
@@ -81,59 +76,6 @@ export default function FixedDates({navigation}) {
             color: Colors.textB,
           }}
         />
-        {/* {destinations.map((item, index) => (
-          <View key={index}>
-            <View
-              style={{
-                backgroundColor: '#F4F4F4',
-                borderRadius: HP(0.5),
-                paddingLeft: HP(2),
-                height: HP(6),
-                justifyContent: 'center',
-                marginTop: HP(1),
-              }}>
-              <TextInput
-                placeholder={`Enter location`}
-                placeholderTextColor={'#737373'}
-                value={item.place}
-                onChangeText={text => {
-                  const updated = [...destinations];
-                  updated[index].place = text;
-                  setDestinations(updated);
-                }}
-                style={{fontSize: FS(1.5)}}
-              />
-            </View>
-
-            <CustomText
-              children={`Date for Place ${index + 1}`}
-              style={{
-                fontFamily: Fonts.MontserratBold,
-                fontSize: FS(1.7),
-                color: Colors.textB,
-                marginTop: HP(2),
-              }}
-            />
-            <TouchableOpacity
-              style={{
-                backgroundColor: '#F4F4F4',
-                borderRadius: HP(0.5),
-                paddingLeft: HP(2),
-                height: HP(6),
-                justifyContent: 'center',
-                marginTop: HP(1),
-              }}
-              onPress={() => {
-                // You can integrate a date picker modal here.
-                alert('Open date picker for index ' + index);
-              }}>
-              <CustomText
-                style={{fontSize: FS(1.4), color: Colors.textB}}
-                children={item.date}
-              />
-            </TouchableOpacity>
-          </View>
-        ))} */}
         {destinations.map((item, index) => (
           <View key={index} style={{marginTop: HP(1)}}>
             {index !== 0 && (
@@ -162,6 +104,7 @@ export default function FixedDates({navigation}) {
             <TextInput
               placeholder="Select a location"
               value={item.place}
+              placeholderTextColor={'#333'}
               onChangeText={text => {
                 const updated = [...destinations];
                 updated[index].place = text;
@@ -173,13 +116,15 @@ export default function FixedDates({navigation}) {
                 marginTop: 8,
                 backgroundColor: '#F4F4F4',
                 height: HP(6),
+                fontFamily: Fonts.MontserratRegular,
+                fontSize: FS(1.7),
+                color: '#333',
               }}
             />
 
             <TouchableOpacity
               onPress={() => {
-                // Replace this alert with actual date picker logic
-                alert(`Open date picker for index ${index}`);
+                showDatePicker(index);
               }}
               style={{
                 borderRadius: 10,
@@ -237,11 +182,17 @@ export default function FixedDates({navigation}) {
               }}>
               {checked && <Icon name="check" size={HP(1.8)} color="#fff" />}
             </TouchableOpacity>
-
+            {/* <View style={{marginVertical: HP(3)}}> */}
             <CustomText
-              style={{fontSize: FS(1.5), color: Colors.lightGT, width: WP(80)}}>
+              style={{
+                fontSize: FS(1.5),
+                color: Colors.lightGT,
+                width: WP(80),
+                marginVertical: HP(2),
+              }}>
               {`Check this box and we'll create a tailor-made travel plan just for you!`}
             </CustomText>
+            {/* </View> */}
           </View>
         </View>
         <CusButton
@@ -268,6 +219,12 @@ export default function FixedDates({navigation}) {
             />
           </CustomText>
         </View>
+        <DateTimePickerModal
+          isVisible={isDatePickerVisible}
+          mode="date"
+          onConfirm={handleConfirm}
+          onCancel={hideDatePicker}
+        />
       </View>
     </ScrollView>
   );

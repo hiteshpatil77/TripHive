@@ -6,6 +6,7 @@ import CustomText from '../../components/CustomText';
 import Colors from '../../theme/Color';
 import Fonts from '../../theme/Fonts';
 import CusButton from '../../components/CusButton';
+import {ScrollView} from 'react-native-gesture-handler';
 
 export default function AiPlanner({navigation}) {
   const [location, setLocation] = useState('');
@@ -22,7 +23,7 @@ export default function AiPlanner({navigation}) {
   };
 
   return (
-    <View style={{flex: 1, backgroundColor: '#fff'}}>
+    <ScrollView style={{flex: 1, backgroundColor: '#fff'}}>
       <View style={{width: WP(90), alignSelf: 'center'}}>
         <TripHeader navigation={navigation} hearder={'Hive Al Planner'} />
         {/* Location Input */}
@@ -31,11 +32,15 @@ export default function AiPlanner({navigation}) {
           Where are you traveling from?
         </CustomText>
         <TextInput
-          style={[styles.input, {width: WP(87)}]}
+          style={[
+            styles.input,
+            {width: WP(87), fontFamily: Fonts.MontserratRegular, color: '#333'},
+          ]}
           // style={[styles.input, {flex: 0.95}]}
           placeholder="Select a location"
           value={location}
           onChangeText={setLocation}
+          placeholderTextColor={'#737373'}
         />
         {/* People Counter */}
         <View style={{marginTop: HP(3.5)}}></View>
@@ -170,7 +175,7 @@ export default function AiPlanner({navigation}) {
             </TouchableOpacity>
           ))}
         </View>
-        <View style={{marginTop: HP(2)}}>
+        <View style={{marginVertical: HP(2)}}>
           <CusButton
             navigation={navigation}
             SecTag={'Next'}
@@ -178,7 +183,7 @@ export default function AiPlanner({navigation}) {
           />
         </View>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 

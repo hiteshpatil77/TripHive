@@ -23,7 +23,7 @@ import CustomText from '../../components/CustomText';
 import TripHeader from '../../components/TripHeader';
 import Icons from '../../theme/Icons';
 import Fonts from '../../theme/Fonts';
-import DraggableFlatList, {ScaleDecorator} from 'react-native-draggable-flatlist';
+import DayWise from './Day-Wise';
 MapboxGL.setAccessToken(
   'pk.eyJ1IjoiYmh1dG9yaWEiLCJhIjoiY2x1am5nbzRvMDM4MTJpbzJic28zZnoyNCJ9.x86CCCHxwknUx-SJS1I5kQ',
 ); // Replace this!
@@ -32,11 +32,11 @@ MapboxGL.setTelemetryEnabled(false);
 MapboxGL.setWellKnownTileServer('Mapbox');
 
 const tabs = [
-  {tab: 'Trip', Pic: Icons.Bag, ID: '0'},
-  {tab: 'Overview', Pic: Icons.OverView, ID: '1'},
-  {tab: 'Day-wise', Pic: Icons.daywise, ID: '2'},
-  {tab: 'Budget', Pic: Icons.daywise, ID: '3'},
-  {tab: 'Explore', Pic: Icons.Explore1, ID: '4'},
+  {tab: 'Trip', Pic: Icons.Bag, ID: '0', label: 'Trip'},
+  // {tab: 'Overview', Pic: Icons.OverView, ID: '1'},
+  {tab: 'Day-wise', Pic: Icons.daywise, ID: '2', label: 'Daywise'},
+  {tab: 'Budget', Pic: Icons.daywise, ID: '3', label: 'Budget'},
+  {tab: 'Explore', Pic: Icons.Explore1, ID: '4', label: 'Explore'},
 ];
 
 const BachelorsTrip = ({navigation}) => {
@@ -90,47 +90,57 @@ const BachelorsTrip = ({navigation}) => {
   const dayOptions = [1, 2, 3, 4];
   const transportOptions = ['Bus', 'Bike', 'Train', 'Flight'];
 
-  const incrementDuration = (cityId) => {
+  const incrementDuration = cityId => {
     setItinerary(prevItinerary =>
       prevItinerary.map(item =>
-        item.id === cityId
-          ? { ...item, duration: item.duration + 1 }
-          : item
-      )
+        item.id === cityId ? {...item, duration: item.duration + 1} : item,
+      ),
     );
   };
 
-  const decrementDuration = (cityId) => {
+  const decrementDuration = cityId => {
     setItinerary(prevItinerary =>
       prevItinerary.map(item =>
         item.id === cityId
-          ? { ...item, duration: Math.max(1, item.duration - 1) }
-          : item
-      )
+          ? {...item, duration: Math.max(1, item.duration - 1)}
+          : item,
+      ),
     );
   };
 
-  const handleDaySelect = (day) => {
+  const handleDaySelect = day => {
     if (selectedCityId !== null) {
       setItinerary(prevItinerary =>
         prevItinerary.map(item =>
-          item.id === selectedCityId
-            ? { ...item, days: day.toString() }
-            : item
-        )
+          item.id === selectedCityId ? {...item, days: day.toString()} : item,
+        ),
       );
     }
     setDayModalVisible(false);
   };
+  const moveItemUp = index => {
+    if (index <= 0) return; // can't move the first item up
+    const updatedItinerary = [...itinerary];
+    const temp = updatedItinerary[index - 1];
+    updatedItinerary[index - 1] = updatedItinerary[index];
+    updatedItinerary[index] = temp;
+    setItinerary(updatedItinerary);
+  };
 
-  const handleTransportSelect = (transport) => {
+  const moveItemDown = index => {
+    if (index >= itinerary.length - 1) return; // can't move last item down
+    const updatedItinerary = [...itinerary];
+    const temp = updatedItinerary[index + 1];
+    updatedItinerary[index + 1] = updatedItinerary[index];
+    updatedItinerary[index] = temp;
+    setItinerary(updatedItinerary);
+  };
+  const handleTransportSelect = transport => {
     if (selectedCityId !== null) {
       setItinerary(prevItinerary =>
         prevItinerary.map(item =>
-          item.id === selectedCityId
-            ? { ...item, flight: transport }
-            : item
-        )
+          item.id === selectedCityId ? {...item, flight: transport} : item,
+        ),
       );
     }
     setTransportModalVisible(false);
@@ -177,9 +187,9 @@ const BachelorsTrip = ({navigation}) => {
     <View style={styles.container}>
       <View style={{marginTop: HP(1.5)}}></View>
       <TripHeader
+        navigation={navigation}
         hearder={'Bachelors Trip'}
         isVisible={true}
-        navigation={navigation}
       />
       <View style={[styles.tabRow, {marginBottom: HP(4)}]}>
         <FlatList
@@ -190,241 +200,201 @@ const BachelorsTrip = ({navigation}) => {
           removeClippedSubviews={false}
         />
       </View>
+      {activeTab.label === 'Daywise' && <DayWise />}
 
-      {activeTab.tab === 'Trip' && (
+      {activeTab.label === 'Trip' && (
         <View
           style={{
             flex: 1,
             width: WP(88),
             alignSelf: 'center',
           }}>
-          <DraggableFlatList
+          <FlatList
             data={itinerary}
-            onDragEnd={({data}) => setItinerary(data)}
             keyExtractor={item => item.id.toString()}
-            renderItem={({item, index, drag, isActive}) => (
-              <ScaleDecorator>
-                <TouchableOpacity
-                  activeOpacity={1}
-                  onLongPress={drag}
-                  style={[
-                    styles.item,
-                    isActive && {backgroundColor: Colors.lightGray},
-                  ]}>
-                  <CustomText style={styles.date}>{item.date}</CustomText>
+            showsVerticalScrollIndicator={false}
+            renderItem={({item, index}) => (
+              <View style={[styles.item, {backgroundColor: Colors.white}]}>
+                <CustomText style={styles.date}>{item.date}</CustomText>
 
-                  <View style={styles.timeline}>
-                    {item.id !== 0 ? (
-                      <View
-                        style={[
-                          styles.dot,
-                          {
-                            backgroundColor: item.color,
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          },
-                        ]}>
-                        <MaterialIcons
-                          name="location-on"
-                          size={10}
-                          style={{color: Colors.white}}
-                        />
-                      </View>
-                    ) : (
-                      <View
-                        style={{
-                          height: HP(1.4),
-                          width: HP(1.4),
-                          borderRadius: HP(5),
+                {/* --- Timeline --- */}
+                <View style={styles.timeline}>
+                  {item.id !== 0 ? (
+                    <View
+                      style={[
+                        styles.dot,
+                        {
                           backgroundColor: item.color,
-                          right: HP(0.7),
-                          marginRight: HP(2),
-                        }}
-                      />
-                    )}
-                    {index !== itinerary.length - 1 && (
-                      <View style={styles.dottedLine} />
-                    )}
-                  </View>
-
-                  {/* City Info */}
-                  <View style={styles.details}>
-                    <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                      <CustomText style={styles.city}>{item.city}</CustomText>
-
-                      {/* Horizontal line */}
-                      <View
-                        // eslint-disable-next-line react-native/no-inline-styles
-                        style={{
-                          height: 1,
-                          backgroundColor: '#ccc',
-                          flex: 1,
-                          marginHorizontal: 8,
-                        }}
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        },
+                      ]}>
+                      <MaterialIcons
+                        name="location-on"
+                        size={10}
+                        style={{color: Colors.white}}
                       />
                     </View>
-
-                    {item.days ? (
-                      <View style={[styles.row, {marginRight: HP(2)}]}>
-                        <Icon name="calendar-outline" size={16} color="#999" />
-                        <CustomText style={styles.subText}>
-                          {item.days} days
-                        </CustomText>
-                        <TouchableOpacity
-                          onPress={() => {
-                            setSelectedCityId(item.id);
-                            setDayModalVisible(true);
-                          }}
-                          style={{position: 'absolute', left: HP(9)}}>
-                          <Entypo name="triangle-down" size={16} color="#999" />
-                        </TouchableOpacity>
-                      </View>
-                    ) : null}
-                    <Modal
-                      transparent
-                      visible={dayModalVisible}
-                      animationType="fade"
-                      onRequestClose={() => setDayModalVisible(false)}>
-                      <TouchableOpacity
-                        style={styles.modalBackground}
-                        onPressOut={() => setDayModalVisible(false)}>
-                        <View style={styles.modalContainer}>
-                          {dayOptions.map(day => (
-                            <TouchableOpacity
-                              onPress={() => handleDaySelect(day)}
-                              key={day}
-                              style={styles.modalItem}>
-                              <Text style={styles.modalText}>{`Day ${day}`}</Text>
-                            </TouchableOpacity>
-                          ))}
-                        </View>
-                      </TouchableOpacity>
-                    </Modal>
-                    <Modal
-                      transparent
-                      visible={transportModalVisible}
-                      animationType="fade"
-                      onRequestClose={() => setTransportModalVisible(false)}>
-                      <TouchableOpacity
-                        style={styles.modalBackground}
-                        onPressOut={() => setTransportModalVisible(false)}>
-                        <View style={styles.modalContainer}>
-                          {transportOptions.map(option => (
-                            <TouchableOpacity
-                              key={option}
-                              onPress={() => handleTransportSelect(option)}
-                              style={styles.modalItem}>
-                              <Text style={styles.modalText}>{option}</Text>
-                            </TouchableOpacity>
-                          ))}
-                        </View>
-                      </TouchableOpacity>
-                    </Modal>
-                    <View style={{flexDirection: 'row'}}>
-                      {item.flight ? (
-                        <View style={styles.row}>
-                          <Icon name="airplane-outline" size={16} color="#999" />
-                          <CustomText style={styles.subText}>
-                            {item.flight}
-                          </CustomText>
-                          <TouchableOpacity
-                            onPress={() => {
-                              setSelectedCityId(item.id);
-                              setTransportModalVisible(true);
-                            }}
-                            style={{position: 'absolute', left: HP(9)}}>
-                            <Entypo name="triangle-down" size={16} color="#999" />
-                          </TouchableOpacity>
-                        </View>
-                      ) : null}
-                      {index !== itinerary.length - 1 && (
-                        <View style={{marginLeft: HP(8), marginTop: HP(2)}}>
-                          <View style={{flexDirection: 'row'}}>
-                            <TouchableOpacity
-                              onPress={() => decrementDuration(item.id)}
-                              style={styles.circle}>
-                              <Feather
-                                name="minus-circle"
-                                size={20}
-                                style={{color: Colors.Main}}
-                              />
-                            </TouchableOpacity>
-
-                            <CustomText style={{marginHorizontal: HP(2)}}>
-                              {item.duration} Hrs
-                            </CustomText>
-
-                            <TouchableOpacity
-                              onPress={() => incrementDuration(item.id)}
-                              style={styles.circle}>
-                              <Feather
-                                name="plus-circle"
-                                size={20}
-                                style={{color: Colors.Main}}
-                              />
-                            </TouchableOpacity>
-                          </View>
-                        </View>
-                      )}
-                    </View>
-                  </View>
-
-                  {/* Actions */}
-                  <View style={styles.actions}>
+                  ) : (
                     <View
                       style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        width: WP(20),
-                      }}>
-                      {item.id !== 0 ? (
-                        <TouchableOpacity>
-                          <SimpleLineIcons
-                            name="arrow-up-circle"
-                            size={20}
-                            style={{color: Colors.Main}}
-                          />
-                        </TouchableOpacity>
-                      ) : (
-                        <TouchableOpacity>
-                          <SimpleLineIcons
-                            // name="arrow-up-circle"
-                            size={20}
-                            style={{color: Colors.Main}}
-                          />
-                        </TouchableOpacity>
-                      )}
-                      {index !== itinerary.length - 1 && (
-                        <TouchableOpacity>
-                          <SimpleLineIcons
-                            name="arrow-down-circle"
-                            size={20}
-                            style={{color: Colors.Main}}
-                          />
-                        </TouchableOpacity>
-                      )}
+                        height: HP(1.4),
+                        width: HP(1.4),
+                        borderRadius: HP(5),
+                        backgroundColor: item.color,
+                        right: HP(0.7),
+                        marginRight: HP(2),
+                      }}
+                    />
+                  )}
+                  {index !== itinerary.length - 1 && (
+                    <View style={styles.dottedLine} />
+                  )}
+                </View>
 
-                      <TouchableOpacity>
-                        <Feather
-                          name="minus-circle"
+                {/* --- City Info and Controls --- */}
+                <View style={styles.details}>
+                  <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                    <CustomText style={styles.city}>{item.city}</CustomText>
+
+                    <View
+                      style={{
+                        height: 1,
+                        backgroundColor: '#ccc',
+                        flex: 1,
+                        marginHorizontal: 8,
+                      }}
+                    />
+                  </View>
+
+                  {/* Days Selector */}
+                  {item.days ? (
+                    <View style={[styles.row, {marginRight: HP(2)}]}>
+                      <Icon name="calendar-outline" size={16} color="#999" />
+                      <CustomText style={styles.subText}>
+                        {item.days} days
+                      </CustomText>
+                      <TouchableOpacity
+                        onPress={() => {
+                          setSelectedCityId(item.id);
+                          setDayModalVisible(true);
+                        }}
+                        style={{position: 'absolute', left: HP(9)}}>
+                        <Entypo name="triangle-down" size={16} color="#999" />
+                      </TouchableOpacity>
+                    </View>
+                  ) : null}
+
+                  {/* Transport Selector */}
+                  {item.flight ? (
+                    <View style={styles.row}>
+                      <Icon name="airplane-outline" size={16} color="#999" />
+                      <CustomText style={styles.subText}>
+                        {item.flight}
+                      </CustomText>
+                      <TouchableOpacity
+                        onPress={() => {
+                          setSelectedCityId(item.id);
+                          setTransportModalVisible(true);
+                        }}
+                        style={{position: 'absolute', left: HP(9)}}>
+                        <Entypo name="triangle-down" size={16} color="#999" />
+                      </TouchableOpacity>
+                    </View>
+                  ) : null}
+
+                  {/* Duration Controls */}
+                  {index !== itinerary.length - 1 && (
+                    <View style={{marginLeft: HP(8), marginTop: HP(2)}}>
+                      <View style={{flexDirection: 'row'}}>
+                        <TouchableOpacity
+                          onPress={() => decrementDuration(item.id)}
+                          style={styles.circle}>
+                          <Feather
+                            name="minus-circle"
+                            size={20}
+                            style={{color: Colors.Main}}
+                          />
+                        </TouchableOpacity>
+
+                        <CustomText style={{marginHorizontal: HP(2)}}>
+                          {item.duration} Hrs
+                        </CustomText>
+
+                        <TouchableOpacity
+                          onPress={() => incrementDuration(item.id)}
+                          style={styles.circle}>
+                          <Feather
+                            name="plus-circle"
+                            size={20}
+                            style={{color: Colors.Main}}
+                          />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  )}
+                </View>
+
+                {/* --- Move & Delete Buttons --- */}
+                <View style={styles.actions}>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      width: WP(20),
+                    }}>
+                    {/* Move Up */}
+                    {index !== 0 && (
+                      <TouchableOpacity onPress={() => moveItemUp(index)}>
+                        <SimpleLineIcons
+                          name="arrow-up-circle"
                           size={20}
                           style={{color: Colors.Main}}
                         />
                       </TouchableOpacity>
-                    </View>
-                    {/* <TouchableOpacity>
+                    )}
+
+                    {/* Move Down */}
+                    {index !== itinerary.length - 1 && (
+                      <TouchableOpacity onPress={() => moveItemDown(index)}>
+                        <SimpleLineIcons
+                          name="arrow-down-circle"
+                          size={20}
+                          style={{color: Colors.Main}}
+                        />
+                      </TouchableOpacity>
+                    )}
+
+                    {/* Delete */}
+                    <TouchableOpacity
+                      onPress={() => {
+                        Alert.alert(
+                          'Delete City',
+                          `Remove ${item.city} from trip?`,
+                          [
+                            {text: 'Cancel', style: 'cancel'},
+                            {
+                              text: 'Delete',
+                              onPress: () =>
+                                setItinerary(prev =>
+                                  prev.filter(i => i.id !== item.id),
+                                ),
+                            },
+                          ],
+                          {cancelable: true},
+                        );
+                      }}>
                       <Feather
-                        name="plus-circle"
+                        name="minus-circle"
                         size={20}
                         style={{color: Colors.Main}}
                       />
-                    </TouchableOpacity> */}
+                    </TouchableOpacity>
                   </View>
-                </TouchableOpacity>
-              </ScaleDecorator>
+                </View>
+              </View>
             )}
-            horizontal={true}
           />
 
           {/* Mapbox Map */}
@@ -469,7 +439,6 @@ const BachelorsTrip = ({navigation}) => {
                   </MapboxGL.PointAnnotation>
                 ))}
 
-                {/* Optional: Connect cities with a line */}
                 <MapboxGL.ShapeSource
                   id="routeSource"
                   shape={{

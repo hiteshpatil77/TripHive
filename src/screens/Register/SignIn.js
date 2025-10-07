@@ -1,32 +1,45 @@
-import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import React from 'react';
+import React, {useState, useEffect} from 'react';
+import {
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  Alert,
+} from 'react-native';
 import MainView from '../../components/MainView';
-import {FS, HP, WP} from '../../utils/Dimention';
 import Icon from 'react-native-vector-icons/AntDesign';
 import Colors from '../../theme/Color';
 import Input from '../../components/Input';
-import Fonts from '../../theme/Fonts';
+import {loginUser} from '../../api/apiService'; // Make sure this path is correct
+import {FS, HP, WP} from '../../utils/Dimention';
 
-export default function SignIn({navigation}) {
-  const handelSignIn = () => {
-    // navigation.navigate('BottomTab');
+const SignIn = ({navigation}) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleSignIn = async () => {
+    if (!email || !password) {
+      Alert.alert('Error', 'Please enter both email and password.');
+      return;
+    }
+    try {
+      const [user] = await loginUser(email, password);
+      console.log('Login successful:', user);
+      navigation.navigate('BottomTab', {user});
+    } catch (error) {
+      console.error('Login failed:', error.message);
+      Alert.alert('Login Failed', error.message);
+    }
   };
 
   return (
     <MainView>
       <View style={{flex: 1, padding: HP(1), paddingHorizontal: HP(2)}}>
-        {/* <Image
-          style={{
-            height: HP(130),
-            width: WP(100),
-            position: 'absolute',
-            resizeMode: 'contain',
-            tintColor: Colors.lightGray,
-          }}
-          source={Icons.plane}></Image> */}
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="left" size={HP(3)} color="black" />
         </TouchableOpacity>
+
         <View style={{alignItems: 'center', marginVertical: HP(4)}}>
           <Text
             style={{
@@ -37,17 +50,25 @@ export default function SignIn({navigation}) {
             Sign In
           </Text>
         </View>
+
         <View>
-          <Input Place={'Email or Phone'} icon={'user'} />
+          <Input
+            Place="Email or Phone"
+            icon="user"
+            value={email}
+            onChangeText={setEmail}
+          />
           <Input
             iconType="SimpleLineIcons"
-            Place={'Password'}
-            icon={'lock'}
+            Place="Password"
+            icon="lock"
             eye={true}
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry={true}
           />
-          <TouchableOpacity
-            onPress={() => navigation.navigate('ForgotPass')}
-            style={{}}>
+
+          <TouchableOpacity onPress={() => navigation.navigate('ForgotPass')}>
             <Text
               style={{
                 alignSelf: 'flex-end',
@@ -59,29 +80,30 @@ export default function SignIn({navigation}) {
             </Text>
           </TouchableOpacity>
         </View>
-        <TouchableOpacity
-          onPress={handelSignIn}
-          style={{
-            height: HP(6),
-            width: WP(90),
-            backgroundColor: Colors.Main,
-            borderRadius: HP(1),
-            marginVertical: HP(2),
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}>
-          <Text
-            style={{
-              fontSize: FS(2.5),
-              fontWeight: 'bold',
-              color: Colors.white,
-            }}>
-            Sign In
-          </Text>
+
+        <TouchableOpacity style={styles.signInButton} onPress={handleSignIn}>
+          <Text style={{color: Colors.white}}>Sign In</Text>
         </TouchableOpacity>
       </View>
     </MainView>
   );
-}
+};
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  signInButton: {
+    height: HP(6),
+    width: WP(90),
+    backgroundColor: Colors.Main,
+    borderRadius: HP(1),
+    marginVertical: HP(2),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  signInText: {
+    fontSize: FS(2.5),
+    fontWeight: 'bold',
+    color: Colors.white,
+  },
+});
+
+export default SignIn;

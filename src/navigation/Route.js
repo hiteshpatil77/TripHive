@@ -16,16 +16,16 @@ import Flexible from '../screens/TripScreen/Flexible';
 import FixedDates from '../screens/TripScreen/FixedDates';
 import AiPlanner from '../screens/TripScreen/AiPlanner';
 import InviteFriend from '../screens/TripScreen/InviteFriend';
-import BachersTrip from '../screens/TripScreen/BacheresTrip';
 import Overview from '../screens/TripScreen/Overview';
 import BachelorsTrip from '../screens/TripScreen/BacheresTrip';
+import AddExpense from '../screens/Expenses/AddExpense';
 
 const Stack = createNativeStackNavigator();
 export default function Route() {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName="BottomTab"
+        initialRouteName="Splash"
         screenOptions={{headerShown: false}}>
         <Stack.Screen name="Splash" component={Splash} />
         <Stack.Screen name="SignIn" component={SignIn} />
@@ -43,6 +43,7 @@ export default function Route() {
         <Stack.Screen name="InviteFriend" component={InviteFriend} />
         <Stack.Screen name="BachelorsTrip" component={BachelorsTrip} />
         <Stack.Screen name="Overview" component={Overview} />
+        <Stack.Screen name="AddExpense" component={AddExpense} />
       </Stack.Navigator>
     </NavigationContainer>
   );

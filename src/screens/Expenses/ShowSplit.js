@@ -9,8 +9,6 @@ import {
 import React from 'react';
 import {FS, HP, WP} from '../../utils/Dimention';
 import CustomText from '../../components/CustomText';
-import FontAwesome from 'react-native-vector-icons/FontAwesome';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Icons from '../../theme/Icons';
 import Fonts from '../../theme/Fonts';
 

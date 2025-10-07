@@ -65,7 +65,7 @@ const Expenses = () => {
         animationDuration: 200,
       }}>
       <Stack.Screen name="ExploreScreen" component={ExpensesScreen} />
-      <Stack.Screen name="AddExpense" component={AddExpense} />
+      {/* <Stack.Screen name="AddExpense" component={AddExpense} /> */}
       <Stack.Screen name="ShowSplit" component={ShowSplit} />
       <Stack.Screen name="SignleExpense" component={SignleExpense} />
       <Stack.Screen name="TripDetails" component={TripDetails} />

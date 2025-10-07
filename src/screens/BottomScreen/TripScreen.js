@@ -226,7 +226,7 @@ export default function TripScreen({navigation}) {
   );
   const Upcoming = ({item}) => (
     <TouchableOpacity
-      onPress={() => navigation.navigate('Overview')}
+      onPress={() => navigation.navigate('BachelorsTrip')}
       style={{
         // alignSelf: 'flex-start',
         alignItems: 'center',
@@ -454,11 +454,9 @@ export default function TripScreen({navigation}) {
         </View>
         <View
           style={{
-            // flexDirection: 'row',
             position: 'absolute',
             top: HP(13),
             left: WP(5),
-            // alignItems: 'center',
             backgroundColor: '#fff',
             borderRadius: HP(1.2),
             width: WP(40),
@@ -487,35 +485,15 @@ export default function TripScreen({navigation}) {
             My Trips
           </CustomText>
         </View>
-        {/* <SearchModal closeModal={closeModal} modalVisible={modalVisible} /> */}
+
         <View
           onPress={openModal}
           style={{
-            // backgroundColor: Colors.white,
             width: WP(85),
             alignSelf: 'center',
             borderRadius: HP(1),
             height: HP(4),
-            // justifyContent: 'center',
-            // bottom: HP(3),
-          }}>
-          {/* <CustomText children={'hey ABC, Where do you want ro go?'} /> */}
-        </View>
-        {/* <View
-        style={{
-          width: WP(95),
-          alignSelf: 'flex-end',
-        }}>
-        <Text style={{fontSize: FS(2.5), fontWeight: 'bold'}}>Book Now</Text>
-        <View style={{marginTop: HP(2)}}>
-          <FlatList
-            data={BookNow}
-            renderItem={renderBookFun}
-            numColumns={3}
-            keyExtractor={(item, index) => index.toString()}
-          />
-        </View>
-      </View> */}
+          }}></View>
         <View
           style={{
             width: WP(95),
@@ -543,7 +521,6 @@ export default function TripScreen({navigation}) {
             width: WP(95),
             alignSelf: 'flex-end',
             marginTop: HP(2),
-            // position: 'relative',
           }}>
           <View
             style={{
@@ -558,7 +535,6 @@ export default function TripScreen({navigation}) {
               style={{
                 fontSize: FS(2),
                 fontFamily: Fonts.MontserratBold,
-                // marginTop: HP(3),
               }}
             />
             <TouchableOpacity>
@@ -622,7 +598,7 @@ export default function TripScreen({navigation}) {
               end={{x: 1, y: 0}}
               style={{
                 borderRadius: HP(1),
-                // padding: HP(1),
+
                 paddingHorizontal: HP(2.5),
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -643,9 +619,8 @@ export default function TripScreen({navigation}) {
         </View>
         <View
           style={{
-            // marginTop: HP(2),
             width: WP(95),
-            // backgroundColor: 'red',
+
             alignSelf: 'flex-end',
             marginTop: HP(1),
           }}>
@@ -682,8 +657,6 @@ export default function TripScreen({navigation}) {
           style={{
             width: WP(95),
             alignSelf: 'flex-end',
-            // marginTop: HP(1),
-            // position: 'relative',
           }}>
           <View
             style={{
@@ -698,7 +671,6 @@ export default function TripScreen({navigation}) {
               style={{
                 fontSize: FS(2),
                 fontFamily: Fonts.MontserratBold,
-                // marginTop: HP(3),
               }}
             />
             <TouchableOpacity>
@@ -722,7 +694,6 @@ export default function TripScreen({navigation}) {
             marginTop: HP(3),
             height: HP(5),
             borderRadius: HP(5),
-            // zIndex: 1,
           }}>
           <CustomText
             style={{

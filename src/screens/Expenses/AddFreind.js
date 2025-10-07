@@ -17,9 +17,14 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import Entypo from 'react-native-vector-icons/Entypo';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import Fonts from '../../theme/Fonts';
+import {friendEveryone, myFreind} from '../../api/apiService';
 
 const AddFreind = ({navigation}) => {
   const [activeTab, setActiveTab] = useState('Friends');
+  const [friendsData, setFriendsData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  console.log('friendsData-=-=->', friendsData);
 
   useEffect(() => {
     const backHandler = BackHandler.addEventListener(
@@ -37,8 +42,6 @@ const AddFreind = ({navigation}) => {
 
   const tabs = useMemo(() => ['Friends', 'Requests', 'Discover'], []);
 
-  const friends = useMemo(() => ['Varun B.', 'Aryan', 'Bhat'], []);
-
   const requests = useMemo(
     () => [
       {name: 'Virat K.', location: 'Maharashtra'},
@@ -50,7 +53,7 @@ const AddFreind = ({navigation}) => {
   const discover = useMemo(
     () => [
       {name: 'Varun B.', location: 'Maharashtra', mutuals: 10},
-      {name: 'ROhit S.', location: 'Maharashtra', mutuals: 10},
+      {name: 'Rohit S.', location: 'Maharashtra', mutuals: 10},
     ],
     [],
   );
@@ -67,8 +70,27 @@ const AddFreind = ({navigation}) => {
     setActiveTab(tab);
   }, []);
 
+  useEffect(() => {
+    const fetchFriends = async () => {
+      try {
+        const data = await friendEveryone();
+        const Freinds = data[0]?.friends;
+        console.log('freinds-=-', Freinds);
+
+        setFriendsData(Freinds);
+      } catch (err) {
+        console.log('error-=>', err);
+
+        setError(err.message || 'Failed to fetch friends');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchFriends();
+  }, []);
+
   const renderFriends = () => {
-    return friends.map((item, index) => (
+    return friendsData.map((item, index) => (
       <View key={index} style={{width: WP(87), alignSelf: 'center'}}>
         <View
           style={{
@@ -76,7 +98,6 @@ const AddFreind = ({navigation}) => {
             padding: 10,
           }}>
           <TouchableOpacity
-            // onPress={() => navigation.navigate('Friends')}
             style={{
               flexDirection: 'row',
               alignItems: 'center',
@@ -90,7 +111,7 @@ const AddFreind = ({navigation}) => {
               }}
               source={Icons.Travel}
             />
-            <CustomText style={{fontSize: FS(1.8)}}>{item}</CustomText>
+            <CustomText style={{fontSize: FS(1.8)}}>{item?.name}</CustomText>
           </TouchableOpacity>
           <View
             style={{
@@ -321,8 +342,8 @@ const AddFreind = ({navigation}) => {
 
   return (
     <SafeAreaView style={{flex: 1, backgroundColor: 'white'}}>
-      <LinearGradient colors={['#FF7530', '#FF7415', '#FFA015']}>
-        <View style={{height: HP(8), width: WP(100)}}>
+      <LinearGradient colors={['#FF8530', '#FF8415', '#FFA015']}>
+        <View style={{height: HP(8), width: WP(100), marginTop: HP(2)}}>
           <View
             style={{
               flexDirection: 'row',
@@ -347,10 +368,11 @@ const AddFreind = ({navigation}) => {
             <CustomText
               style={{
                 fontSize: FS(2.2),
-                fontWeight: 'bold',
-                textAlign: 'center',
+                // fontWeight: 'bold',
+                // textAlign: 'center',
                 marginBottom: 3,
                 color: '#fff',
+                fontFamily: Fonts.MontserratBold,
               }}>
               My Hive
             </CustomText>

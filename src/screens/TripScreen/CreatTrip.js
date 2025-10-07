@@ -89,7 +89,7 @@ export default function CreatTrip({navigation}) {
             <TextInput
               placeholder="Give your trip a name"
               placeholderTextColor={'#737373'}
-              style={{fontSize: FS(1.5)}}
+              style={{fontSize: FS(1.5), color: '#333'}}
             />
           </View>
         </View>
@@ -114,7 +114,11 @@ export default function CreatTrip({navigation}) {
               <TextInput
                 placeholder="0"
                 placeholderTextColor={'#737373'}
-                style={{fontSize: FS(1.5)}}
+                style={{
+                  fontSize: FS(1.5),
+                  fontFamily: Fonts.MontserratBold,
+                  color: '#333',
+                }}
               />
             </View>
             <TouchableOpacity

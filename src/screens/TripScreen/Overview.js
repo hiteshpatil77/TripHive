@@ -11,11 +11,8 @@ import {
   Text,
   Modal,
   TextInput,
-  KeyboardAvoidingView,
-  Platform,
   Alert,
 } from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
 
 import TripHeader from '../../components/TripHeader';
 import Icons from '../../theme/Icons';
@@ -24,11 +21,27 @@ import {FS, HP, WP} from '../../utils/Dimention';
 import Colors from '../../theme/Color';
 import Fonts from '../../theme/Fonts';
 import Icon from 'react-native-vector-icons/FontAwesome6';
+import MapboxGL from '@rnmapbox/maps';
+import IoniconsIcon from 'react-native-vector-icons/Ionicons';
+import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons';
+import Feather from 'react-native-vector-icons/Feather';
+import Entypo from 'react-native-vector-icons/Entypo';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import DraggableFlatList, {
+  ScaleDecorator,
+} from 'react-native-draggable-flatlist';
 
 const {width: SCREEN_WIDTH} = Dimensions.get('window');
 const COLUMN_WIDTH = SCREEN_WIDTH * 0.8;
-const ITEM_HEIGHT = 100;
-const EDGE_THRESHOLD = 40;
+const ITEM_HEIGHT = 150;
+const EDGE_THRESHOLD = 50;
+
+// Mapbox configuration
+MapboxGL.setAccessToken(
+  'pk.eyJ1IjoiYmh1dG9yaWEiLCJhIjoiY2x1am5nbzRvMDM4MTJpbzJic28zZnoyNCJ9.x86CCCHxwknUx-SJS1I5kQ',
+);
+MapboxGL.setTelemetryEnabled(false);
+MapboxGL.setWellKnownTileServer('Mapbox');
 
 const daysData = [
   {
@@ -105,7 +118,7 @@ const Overview = ({navigation}) => {
   const [activeTab, setActiveTab] = useState(tabs[0]);
   const [days, setDays] = useState(daysData);
 
-  // Drag state
+  // Drag state
   const [dragging, setDragging] = useState(false);
   const [currentDragItem, setDragItem] = useState(null);
   const pan = useRef(new Animated.ValueXY()).current;
@@ -141,23 +154,99 @@ const Overview = ({navigation}) => {
   const [activityLocation, setActivityLocation] = useState('Select Location');
   const [activityNotes, setActivityNotes] = useState('');
   const [showDropdown, setShowDropdown] = useState('');
-  const [showTimePicker, setShowTimePicker] = useState(false);
-  const [showDatePicker, setShowDatePicker] = useState(false);
 
-  const formatTime = date =>
-    date && typeof date === 'object'
-      ? `${date.getHours().toString().padStart(2, '0')}:${date
-          .getMinutes()
-          .toString()
-          .padStart(2, '0')}`
-      : 'Select Time';
+  // Settings modal state
+  const [settingsModalVisible, setSettingsModalVisible] = useState(false);
 
-  const formatDate = date =>
-    date && typeof date === 'object'
-      ? `${date.getDate().toString().padStart(2, '0')}-${(date.getMonth() + 1)
-          .toString()
-          .padStart(2, '0')}-${date.getFullYear()}`
-      : 'Select Day Date';
+  // Trip tab state (merged from BacheresTrip)
+  const [itinerary, setItinerary] = useState([
+    {
+      id: 0,
+      date: '10/9',
+      city: 'Delhi',
+      color: '#656565',
+      days: '1',
+      flight: 'Bus',
+      duration: 3,
+      coords: [77.1025, 28.7041],
+    },
+    {
+      id: 1,
+      date: '10/9',
+      city: 'Jaipur',
+      color: '#0373F3',
+      days: '1',
+      flight: 'Bus',
+      duration: 3,
+      coords: [75.7873, 26.9124],
+    },
+    {
+      id: 2,
+      date: '10/9',
+      city: 'Jaisalmer',
+      color: '#E6495E',
+      days: '1',
+      flight: 'Bus',
+      duration: 3,
+      coords: [70.9167, 26.9157],
+    },
+    {
+      id: 3,
+      date: '10/9',
+      city: 'Goa',
+      color: '#F3BB03',
+      days: '1',
+      flight: 'Bus',
+      duration: 3,
+      coords: [74.124, 15.2993],
+    },
+  ]);
+  const [dayModalVisible, setDayModalVisible] = useState(false);
+  const [transportModalVisible, setTransportModalVisible] = useState(false);
+  const [selectedCityId, setSelectedCityId] = useState(null);
+
+  const dayOptions = [1, 2, 3, 4];
+  const transportOptions = ['Bus', 'Bike', 'Train', 'Flight'];
+
+  const incrementDuration = cityId => {
+    setItinerary(prevItinerary =>
+      prevItinerary.map(item =>
+        item.id === cityId ? {...item, duration: item.duration + 1} : item,
+      ),
+    );
+  };
+
+  const decrementDuration = cityId => {
+    setItinerary(prevItinerary =>
+      prevItinerary.map(item =>
+        item.id === cityId
+          ? {...item, duration: Math.max(1, item.duration - 1)}
+          : item,
+      ),
+    );
+  };
+
+  const handleDaySelect = day => {
+    if (selectedCityId !== null) {
+      setItinerary(prevItinerary =>
+        prevItinerary.map(item =>
+          item.id === selectedCityId ? {...item, days: day.toString()} : item,
+        ),
+      );
+    }
+    setDayModalVisible(false);
+  };
+
+  const handleTransportSelect = transport => {
+    if (selectedCityId !== null) {
+      setItinerary(prevItinerary =>
+        prevItinerary.map(item =>
+          item.id === selectedCityId ? {...item, flight: transport} : item,
+        ),
+      );
+    }
+    setTransportModalVisible(false);
+  };
 
   const handleAddItem = () => {
     if (!newType.trim() || !newTitle.trim()) {
@@ -173,6 +262,7 @@ const Overview = ({navigation}) => {
         id: `event${dayIndex}-${Date.now()}`,
         type: newType.trim(),
         title: newTitle.trim(),
+        // color: randomColor(),
       };
 
       if (addingList === 'events') {
@@ -190,6 +280,10 @@ const Overview = ({navigation}) => {
     setActivityModalVisible(false);
     setNewType('');
     setNewTitle('');
+  };
+
+  const handleSettingsPress = () => {
+    setSettingsModalVisible(true);
   };
 
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
@@ -222,13 +316,11 @@ const Overview = ({navigation}) => {
     });
   };
 
-  // Helper to get stacked items for a day
   const getStacked = day => [
     ...day.events.map(ev => ({...ev, list: 'events'})),
     ...day.services.map(sv => ({...sv, list: 'services'})),
   ];
 
-  // New: Render drop zone between columns
   const DropZone = ({index}) => (
     <View
       style={[
@@ -248,7 +340,6 @@ const Overview = ({navigation}) => {
       y: g.moveY - 100,
     });
 
-    // Auto‑scroll horizontally when close to edges
     if (g.moveX < EDGE_THRESHOLD) {
       scrollViewRef.current?.scrollTo({
         x: Math.max(0, scrollX.current - 50),
@@ -261,14 +352,12 @@ const Overview = ({navigation}) => {
       });
     }
 
-    // Calculate which drop zone (between columns) we're hovering over
     const dropX = g.moveX + scrollX.current;
     let dropZoneIdx = Math.floor(dropX / COLUMN_WIDTH + 0.5); // +0.5 to snap to between columns
     dropZoneIdx = clamp(dropZoneIdx, 0, days.length);
 
     setHoveredDropZone(dropZoneIdx);
 
-    // Calculate which day and index we're hovering over (for vertical reorder)
     const targetDayIdx = clamp(
       Math.floor(dropX / COLUMN_WIDTH),
       0,
@@ -294,10 +383,8 @@ const Overview = ({navigation}) => {
     }
   };
 
-  // Animated values for each card (keyed by item.id)
   const animatedYMap = useRef({}).current;
 
-  // Helper to get or create Animated.Value for a card
   const getAnimatedY = id => {
     if (!animatedYMap[id]) {
       animatedYMap[id] = new Animated.Value(0);
@@ -305,7 +392,6 @@ const Overview = ({navigation}) => {
     return animatedYMap[id];
   };
 
-  // Smoothly animate translateY for affected cards
   const animateCardY = (id, toValue) => {
     Animated.timing(getAnimatedY(id), {
       toValue,
@@ -330,19 +416,19 @@ const Overview = ({navigation}) => {
     const movedIndex = sourceList.findIndex(e => e.id === item.id);
     const [moved] = sourceList.splice(movedIndex, 1);
 
-    // Insert at hovered index in the target column
     if (
       dropZoneIdx !== sourceDayIdx &&
       dropZoneIdx >= 0 &&
       dropZoneIdx <= days.length
     ) {
+      // If dropping after last column, append to last day
       let targetDayIdx =
         dropZoneIdx === days.length ? days.length - 1 : dropZoneIdx;
       const targetDay = newDays[targetDayIdx];
       const targetList =
         item.list === 'services' ? targetDay.services : targetDay.events;
 
-      // Insert at hovered index (not just at end)
+      // Insert at end of list (or at hovered index if inside a column)
       let insertIdx = targetList.length;
       if (
         hovered.dayId === targetDay.id &&
@@ -361,7 +447,9 @@ const Overview = ({navigation}) => {
       moved.dayId = targetDay.id;
       targetList.splice(insertIdx, 0, moved);
     } else {
-      // DRAG INSIDE SAME DAY – reorder vertically
+      /**
+       * 2️⃣  DRAG INSIDE SAME DAY  – reorder vertically
+       */
       const columnTopY = HP(26);
       const dropYInColumn = g.moveY - columnTopY;
       const baseShift = item.list === 'services' ? sourceDay.events.length : 0;
@@ -377,6 +465,7 @@ const Overview = ({navigation}) => {
         hovered.list === item.list &&
         hovered.index !== null
       ) {
+        // Only count items of the same list type up to hovered.index
         const stacked = getStacked(sourceDay);
         let count = 0;
         for (let i = 0; i < stacked.length; i++) {
@@ -440,6 +529,20 @@ const Overview = ({navigation}) => {
     },
   });
 
+  const moveItemUp = index => {
+    if (index === 0) return; // already top
+    const updated = [...itinerary];
+    [updated[index - 1], updated[index]] = [updated[index], updated[index - 1]];
+    setItinerary(updated);
+  };
+
+  const moveItemDown = index => {
+    if (index === itinerary.length - 1) return; // already bottom
+    const updated = [...itinerary];
+    [updated[index], updated[index + 1]] = [updated[index + 1], updated[index]];
+    setItinerary(updated);
+  };
+
   const Card = ({item}) => (
     <View>
       <View style={[styles.card, {backgroundColor: '#fff'}]}>
@@ -463,8 +566,22 @@ const Overview = ({navigation}) => {
       </View>
     </View>
   );
+
+  // AnimatedCard with smooth animation (only slide up/down, no vibration, no duplicate floating card)
   const AnimatedCard = ({item, index, stacked, dayId}) => {
-    // Animate translateY if this card is affected by drag
+    // Hooks must be called unconditionally
+    const animatedY = useRef(new Animated.Value(0)).current;
+
+    // Determine if this card is currently the floating one
+    const isFloating =
+      dragging &&
+      floatingInfo &&
+      floatingInfo.dayId === dayId &&
+      floatingInfo.index === index &&
+      currentDragItem &&
+      currentDragItem.id === item.id;
+
+    // Only animate cards in the hovered (target) column and only slide up/down
     let translateY = 0;
     if (
       dragging &&
@@ -479,7 +596,6 @@ const Overview = ({navigation}) => {
       const isSameDay = fromDay === dayId;
 
       if (isSameDay) {
-        // Animate cards in the same day as before
         const from = fromIdx;
         const to = hovered.index;
         if (from < to && index > from && index <= to) {
@@ -487,15 +603,30 @@ const Overview = ({navigation}) => {
         } else if (from > to && index >= to && index < from) {
           translateY = ITEM_HEIGHT;
         }
-      } else {
-        // Animate cards in the hovered day (target day)
+      } else if (hovered.dayId === dayId) {
         if (index >= hovered.index) {
           translateY = ITEM_HEIGHT;
         }
       }
     }
+
+    React.useEffect(() => {
+      if (dragging) {
+        Animated.timing(animatedY, {
+          toValue: translateY,
+          duration: 180,
+          useNativeDriver: true,
+        }).start();
+      } else {
+        animatedY.setValue(0);
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [translateY, dragging]);
+
+    if (isFloating) return null;
+
     const animatedStyle = {
-      transform: [{translateY: new Animated.Value(translateY)}],
+      transform: [{translateY: animatedY}],
     };
     return (
       <Animated.View style={animatedStyle}>
@@ -503,78 +634,6 @@ const Overview = ({navigation}) => {
       </Animated.View>
     );
   };
-  // AnimatedCard with smooth, small slide up/down and "insert" effect
-  // const AnimatedCard = ({item, index, stacked, dayId}) => {
-  //   // Hide the floating card in all columns
-  //   const isFloating =
-  //     dragging &&
-  //     floatingInfo &&
-  //     floatingInfo.dayId === dayId &&
-  //     floatingInfo.index === index &&
-  //     currentDragItem &&
-  //     currentDragItem.id === item.id;
-
-  //   if (isFloating) return null;
-
-  //   // Small slide offset for visual feedback
-  //   const SLIDE_OFFSET = 15;
-
-  //   // Calculate translateY for "insert" effect
-  //   let translateY = 0;
-  //   if (
-  //     dragging &&
-  //     currentDragItem &&
-  //     hovered.dayId === dayId &&
-  //     hovered.index !== null
-  //   ) {
-  //     const fromDay = currentDragItem.dayId;
-  //     const fromIdx = stacked.findIndex(
-  //       i => i.id === currentDragItem.id && dayId === fromDay,
-  //     );
-  //     const isSameDay = fromDay === dayId;
-
-  //     if (isSameDay) {
-  //       // If dragging within the same column
-  //       const from = fromIdx;
-  //       const to = hovered.index;
-  //       if (from < to && index > from && index <= to) {
-  //         translateY = -SLIDE_OFFSET;
-  //       } else if (from > to && index >= to && index < from) {
-  //         translateY = SLIDE_OFFSET;
-  //       }
-  //     } else if (hovered.dayId === dayId) {
-  //       // If dragging to a different column
-  //       // Slide down cards at or after the hovered index
-  //       if (index >= hovered.index) {
-  //         translateY = SLIDE_OFFSET;
-  //       }
-  //     }
-  //   }
-
-  //   // Use useRef to persist the animated value per card
-  //   const animatedY = useRef(new Animated.Value(0)).current;
-
-  //   React.useEffect(() => {
-  //     if (dragging) {
-  //       Animated.timing(animatedY, {
-  //         toValue: translateY,
-  //         duration: 160,
-  //         useNativeDriver: true,
-  //       }).start();
-  //     } else {
-  //       animatedY.setValue(0);
-  //     }
-  //   }, [translateY, dragging, animatedY]);
-
-  //   const animatedStyle = {
-  //     transform: [{translateY: animatedY}],
-  //   };
-  //   return (
-  //     <Animated.View style={animatedStyle}>
-  //       <Card item={item} />
-  //     </Animated.View>
-  //   );
-  // };
 
   const generateUniqueKey = () => {
     return `event_${Date.now()}_${Math.floor(Math.random() * 1000000)}`;
@@ -605,71 +664,79 @@ const Overview = ({navigation}) => {
           <View style={styles.emptyState}>
             <TouchableOpacity
               style={styles.addButton}
-              onPress={() => openActivityModal(day.id, 'events')}>
+              onPress={() => {
+                setActivityModalVisible(true);
+                setModalDayId(day.id);
+                setAddingList('events');
+              }}>
               <Text style={styles.addButtonText}>+ Add Event</Text>
             </TouchableOpacity>
           </View>
         )}
 
-        <ScrollView
-          style={{maxHeight: HP(60)}}
-          contentContainerStyle={{paddingBottom: HP(2)}}
-          showsVerticalScrollIndicator={true}>
-          {stacked.map((item, idx) => {
-            const isFloating =
-              dragging &&
-              floatingInfo &&
-              floatingInfo.dayId === day.id &&
-              floatingInfo.index === idx;
-            if (isFloating) return null;
-            return (
-              <View key={item.id} style={styles.itemWrapper}>
-                <AnimatedCard
-                  item={item}
-                  index={idx}
-                  stacked={stacked}
-                  dayId={day.id}
-                />
-                <TouchableOpacity
-                  style={{}}
-                  onPress={() => openActivityModal(day.id, 'events')}>
-                  <Image
-                    source={Icons.add}
-                    style={{
-                      height: HP(2),
-                      width: WP(4),
-                      resizeMode: 'center',
-                      marginTop: HP(2),
-                      left: WP(2),
-                    }}
-                  />
-                </TouchableOpacity>
-              </View>
-            );
-          })}
-        </ScrollView>
+        {/* STACKED ITEMS (events + services) */}
+        {stacked.map((item, idx) => {
+          // Hide the original tile if it's being dragged (floating)
+          const isFloating =
+            dragging &&
+            floatingInfo &&
+            floatingInfo.dayId === day.id &&
+            floatingInfo.index === idx;
+          if (isFloating) return null;
+          return (
+            <View key={item.id} style={styles.itemWrapper}>
+              <AnimatedCard
+                item={item}
+                index={idx}
+                stacked={stacked}
+                dayId={day.id}
+              />
+
+              <TouchableOpacity
+                style={{
+                  borderWidth: 1,
+                  borderColor: '#D9D9D9cc',
+                  borderRadius: HP(0.5),
+                  marginTop: HP(1),
+                  alignSelf: 'flex-start',
+                  marginLeft: HP(2),
+                }}
+                onPress={() => {
+                  setActivityModalVisible(true);
+                  setModalDayId(day.id);
+                  setAddingList('events');
+                }}>
+                <Text
+                  // eslint-disable-next-line react-native/no-inline-styles
+                  style={{
+                    padding: HP(0.5),
+                    paddingHorizontal: HP(1),
+                    color: '#D9D9D9',
+                  }}>
+                  +
+                </Text>
+              </TouchableOpacity>
+            </View>
+          );
+        })}
       </View>
     );
   };
 
   const handleSaveActivity = () => {
-    let typeToUse =
-      activityType && activityType.trim() ? activityType : 'Activity';
-    let titleToUse =
-      activityTitle && activityTitle.trim() ? activityTitle : 'Activity';
-
-    if (!typeToUse || !titleToUse || !modalDayId) {
+    if (!activityType || !activityTitle.trim() || !modalDayId) {
       Alert.alert('Error', 'Please select type and enter title');
       return;
     }
     setDays(prevDays =>
       prevDays.map(day => {
         if (day.id !== modalDayId) return day;
+        // const newId = `event${day.id.replace('day', '')}-${Date.now()}`;
         const newItem = {
           id: generateUniqueKey(),
-          type: typeToUse,
-          title: titleToUse,
-          color: activityTypeColors[typeToUse] || '#A5F3FC',
+          type: activityType,
+          title: activityTitle,
+          color: activityTypeColors[activityType] || '#A5F3FC',
           cost: activityCost,
           startTime: activityStartTime,
           duration: activityDuration,
@@ -698,17 +765,15 @@ const Overview = ({navigation}) => {
     setActivityNotes('');
   };
 
-  // When opening the modal, auto-select "Activity" if not already set
-  const openActivityModal = (dayId, list = 'events') => {
-    setActivityModalVisible(true);
-    setModalDayId(dayId);
-    setAddingList(list);
-    if (!activityType) setActivityType('Activity');
-  };
-
   return (
     <View style={styles.screen}>
-      <TripHeader hearder="Bachelor Trip" navigation={navigation} />
+      <TripHeader
+        hearder="Bachelor Trip"
+        navigation={navigation}
+        isVisible={true}
+        onSettingsPress={handleSettingsPress}
+      />
+
       {/* Tabs */}
       <View style={styles.tabs}>
         {tabs.map(t => (
@@ -737,323 +802,683 @@ const Overview = ({navigation}) => {
         ))}
       </View>
 
-      {/* Days scroll + drag responder */}
-      <View style={styles.datesContainer} {...panResponder.panHandlers}>
-        <ScrollView
-          horizontal
-          ref={scrollViewRef}
-          showsHorizontalScrollIndicator={false}
-          scrollEventThrottle={16}
-          onScroll={e => {
-            scrollX.current = e.nativeEvent.contentOffset.x;
-          }}
-          style={styles.scrollView}>
-          <DropZone index={0} />
-          {days.map((d, idx) => (
-            <React.Fragment key={d.id}>
-              <DateColumn day={d} />
-              <DropZone index={idx + 1} />
-            </React.Fragment>
-          ))}
-        </ScrollView>
+      {activeTab.tab === 'Trip' ? (
+        <View
+          style={{
+            flex: 1,
+            width: WP(90),
+            alignSelf: 'center',
+            marginTop: HP(2),
+          }}>
+          <FlatList
+            data={itinerary}
+            extraData={itinerary}
+            keyExtractor={(item, index) => `${item.id}-${index}`}
+            renderItem={({item, index}) => (
+              <TouchableOpacity
+                activeOpacity={1}
+                onLongPress={drag}
+                style={[
+                  styles.item,
+                  isActive && {backgroundColor: Colors.lightGray},
+                ]}>
+                <CustomText style={styles.date}>{item.date}</CustomText>
 
-        {dragging && currentDragItem && (
-          <Animated.View
-            style={[
-              styles.dragPreview,
-              {
-                transform: [{translateX: pan.x}, {translateY: pan.y}],
-                backgroundColor: currentDragItem.color,
-                zIndex: 100,
-              },
-            ]}>
-            <CustomText style={styles.cardType}>
-              {currentDragItem.type}
-            </CustomText>
-            <CustomText style={styles.cardTitle}>
-              {currentDragItem.title}
-            </CustomText>
-          </Animated.View>
-        )}
-      </View>
-      {/* Add Event Modal */}
-      <Modal
-        visible={activityModalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setActivityModalVisible(false)}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          style={styles.activityModalContainer}>
-          <View style={styles.activityModalContent}>
+                <View style={styles.timeline}>
+                  {item.id !== 0 ? (
+                    <View
+                      style={[
+                        styles.dot,
+                        {
+                          backgroundColor: item.color,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        },
+                      ]}>
+                      <MaterialIcons
+                        name="location-on"
+                        size={10}
+                        style={{color: Colors.white}}
+                      />
+                    </View>
+                  ) : (
+                    <View
+                      style={{
+                        height: HP(1.4),
+                        width: HP(1.4),
+                        borderRadius: HP(5),
+                        backgroundColor: item.color,
+                        right: HP(0.7),
+                        marginRight: HP(2),
+                      }}
+                    />
+                  )}
+                  {index !== itinerary.length - 1 && (
+                    <View style={styles.dottedLine} />
+                  )}
+                </View>
+
+                <View style={styles.details}>
+                  <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                    <CustomText style={styles.city}>{item.city}</CustomText>
+                    <View
+                      style={{
+                        height: 1,
+                        backgroundColor: '#ccc',
+                        flex: 1,
+                        marginHorizontal: 8,
+                      }}
+                    />
+                  </View>
+
+                  {item.days ? (
+                    <View style={[styles.row, {marginRight: HP(2)}]}>
+                      <IoniconsIcon
+                        name="calendar-outline"
+                        size={16}
+                        color="#999"
+                      />
+                      <CustomText style={styles.subText}>
+                        {item.days} days
+                      </CustomText>
+                      <TouchableOpacity
+                        onPress={() => {
+                          setSelectedCityId(item.id);
+                          setDayModalVisible(true);
+                        }}
+                        style={{position: 'absolute', left: HP(9)}}>
+                        <Entypo name="triangle-down" size={16} color="#999" />
+                      </TouchableOpacity>
+                    </View>
+                  ) : null}
+
+                  <Modal
+                    transparent
+                    visible={dayModalVisible}
+                    animationType="fade"
+                    onRequestClose={() => setDayModalVisible(false)}>
+                    <TouchableOpacity
+                      style={styles.modalBackground}
+                      onPressOut={() => setDayModalVisible(false)}>
+                      <View style={styles.modalContainer}>
+                        {dayOptions.map(day => (
+                          <TouchableOpacity
+                            onPress={() => handleDaySelect(day)}
+                            key={day}
+                            style={styles.modalItem}>
+                            <Text style={styles.modalText}>{`Day ${day}`}</Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    </TouchableOpacity>
+                  </Modal>
+
+                  <Modal
+                    transparent
+                    visible={transportModalVisible}
+                    animationType="fade"
+                    onRequestClose={() => setTransportModalVisible(false)}>
+                    <TouchableOpacity
+                      style={styles.modalBackground}
+                      onPressOut={() => setTransportModalVisible(false)}>
+                      <View style={styles.modalContainer}>
+                        {transportOptions.map(option => (
+                          <TouchableOpacity
+                            key={option}
+                            onPress={() => handleTransportSelect(option)}
+                            style={styles.modalItem}>
+                            <Text style={styles.modalText}>{option}</Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    </TouchableOpacity>
+                  </Modal>
+
+                  <View style={{flexDirection: 'row'}}>
+                    {item.flight ? (
+                      <View style={styles.row}>
+                        <IoniconsIcon
+                          name="airplane-outline"
+                          size={16}
+                          color="#999"
+                        />
+                        <CustomText style={styles.subText}>
+                          {item.flight}
+                        </CustomText>
+                        <TouchableOpacity
+                          onPress={() => {
+                            setSelectedCityId(item.id);
+                            setTransportModalVisible(true);
+                          }}
+                          style={{position: 'absolute', left: HP(9)}}>
+                          <Entypo name="triangle-down" size={16} color="#999" />
+                        </TouchableOpacity>
+                      </View>
+                    ) : null}
+
+                    {index !== itinerary.length - 1 && (
+                      <View style={{marginLeft: HP(8), marginTop: HP(2)}}>
+                        <View style={{flexDirection: 'row'}}>
+                          <TouchableOpacity
+                            onPress={() => decrementDuration(item.id)}
+                            style={styles.circle}>
+                            <Feather
+                              name="minus-circle"
+                              size={20}
+                              style={{color: Colors.Main}}
+                            />
+                          </TouchableOpacity>
+
+                          <CustomText style={{marginHorizontal: HP(2)}}>
+                            {item.duration} Hrs
+                          </CustomText>
+
+                          <TouchableOpacity
+                            onPress={() => incrementDuration(item.id)}
+                            style={styles.circle}>
+                            <Feather
+                              name="plus-circle"
+                              size={20}
+                              style={{color: Colors.Main}}
+                            />
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    )}
+                  </View>
+                </View>
+
+                <View style={styles.actions}>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      width: WP(20),
+                    }}>
+                    {/* Move Up */}
+                    <TouchableOpacity
+                      onPress={() => moveItemUp(index)}
+                      disabled={index === 0}
+                      style={{
+                        opacity: index === 0 ? 0.4 : 1,
+                      }}>
+                      <SimpleLineIcons
+                        name="arrow-up-circle"
+                        size={20}
+                        color={index === 0 ? '#ccc' : Colors.Main}
+                      />
+                    </TouchableOpacity>
+                    {/* Move Down */}
+                    <TouchableOpacity
+                      onPress={() => moveItemDown(index)}
+                      disabled={index === itinerary.length - 1}>
+                      <SimpleLineIcons
+                        name="arrow-down-circle"
+                        size={20}
+                        color={
+                          index === itinerary.length - 1 ? '#ccc' : Colors.Main
+                        }
+                      />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity onPress={() => deleteItem(item.id)}>
+                      <Feather
+                        name="minus-circle"
+                        size={20}
+                        color={Colors.Main}
+                      />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            )}
+            // horizontal={true}
+            showsHorizontalScrollIndicator={false}
+          />
+
+          <View
+            style={{
+              height: HP(15),
+              width: WP(92),
+              alignSelf: 'center',
+              backgroundColor: Colors.white,
+              justifyContent: 'center',
+              borderRadius: HP(1),
+              elevation: 20,
+            }}>
             <View
               style={{
-                height: HP(10),
-                paddingHorizontal: 20,
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                borderBottomWidth: 1,
-                borderBottomColor: '#eee',
-                backgroundColor: activityTypeColors[activityType] || '#A5F3FC',
-                paddingTop: HP(3),
+                height: HP(13),
+                width: WP(88),
+                alignSelf: 'center',
+                borderRadius: HP(1),
               }}>
-              <View style={styles.dropdownContainer}>
-                <TouchableOpacity
-                  style={styles.dropdownHeader}
-                  onPress={() => setShowDropdown(!showDropdown)}>
-                  <CustomText style={styles.activityModalTitle}>
-                    {activityType || 'Activity'}
-                  </CustomText>
-                  <Icon
-                    name={showDropdown ? 'chevron-up' : 'chevron-down'}
-                    size={16}
-                    color="#9898B4"
-                    style={{top: HP(1)}}
+              <MapboxGL.MapView style={{flex: 1}}>
+                <MapboxGL.Camera
+                  zoomLevel={4}
+                  centerCoordinate={[78.9629, 20.5937]}
+                />
+
+                {itinerary.map((item, idx) => (
+                  <MapboxGL.PointAnnotation
+                    key={`point-${idx}`}
+                    id={`point-${idx}`}
+                    coordinate={item.coords}>
+                    <View
+                      style={{
+                        width: 10,
+                        height: 10,
+                        backgroundColor: item.color,
+                        borderRadius: 5,
+                        borderWidth: 1,
+                        borderColor: '#fff',
+                      }}
+                    />
+                  </MapboxGL.PointAnnotation>
+                ))}
+
+                <MapboxGL.ShapeSource
+                  id="routeSource"
+                  shape={{
+                    type: 'Feature',
+                    geometry: {
+                      type: 'LineString',
+                      coordinates: itinerary.map(item => item.coords),
+                    },
+                  }}>
+                  <MapboxGL.LineLayer
+                    id="routeLine"
+                    style={{lineColor: '#007AFF', lineWidth: 3}}
                   />
+                </MapboxGL.ShapeSource>
+              </MapboxGL.MapView>
+            </View>
+          </View>
+        </View>
+      ) : (
+        <>
+          {/* Days scroll + drag responder */}
+          <View style={styles.datesContainer} {...panResponder.panHandlers}>
+            <ScrollView
+              horizontal
+              ref={scrollViewRef}
+              showsHorizontalScrollIndicator={false}
+              scrollEventThrottle={16}
+              onScroll={e => {
+                scrollX.current = e.nativeEvent.contentOffset.x;
+              }}
+              style={styles.scrollView}>
+              <DropZone index={0} />
+              {days.map((d, idx) => (
+                <React.Fragment key={d.id}>
+                  <DateColumn day={d} />
+                  <DropZone index={idx + 1} />
+                </React.Fragment>
+              ))}
+            </ScrollView>
+
+            {dragging && currentDragItem && (
+              <Animated.View
+                style={[
+                  styles.dragPreview,
+                  {
+                    transform: [{translateX: pan.x}, {translateY: pan.y}],
+                    backgroundColor: currentDragItem.color,
+                    zIndex: 100,
+                  },
+                ]}>
+                <CustomText style={styles.cardType}>
+                  {currentDragItem.type}
+                </CustomText>
+                <CustomText style={styles.cardTitle}>
+                  {currentDragItem.title}
+                </CustomText>
+              </Animated.View>
+            )}
+          </View>
+
+          {/* Add Event Modal */}
+          <Modal
+            visible={activityModalVisible}
+            transparent
+            animationType="slide"
+            onRequestClose={() => setActivityModalVisible(false)}>
+            <View style={styles.activityModalContainer}>
+              <View style={styles.activityModalContent}>
+                <View
+                  style={{
+                    height: HP(10),
+                    paddingHorizontal: 20,
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    borderBottomWidth: 1,
+                    borderBottomColor: '#eee',
+                    backgroundColor:
+                      activityTypeColors[activityType] || '#A5F3FC',
+                    paddingTop: HP(3),
+                  }}>
+                  <View style={styles.dropdownContainer}>
+                    <TouchableOpacity
+                      style={styles.dropdownHeader}
+                      onPress={() => setShowDropdown(!showDropdown)}>
+                      <CustomText style={styles.activityModalTitle}>
+                        {activityType || 'Activity'}
+                      </CustomText>
+                      <Icon
+                        name={showDropdown ? 'chevron-up' : 'chevron-down'}
+                        size={16}
+                        color="#9898B4"
+                        style={{top: HP(1)}}
+                      />
+                    </TouchableOpacity>
+
+                    {showDropdown && (
+                      <View style={styles.dropdownOptions}>
+                        <TouchableOpacity
+                          style={[
+                            styles.dropdownOption,
+                            {backgroundColor: activityTypeColors.Activity},
+                          ]}
+                          onPress={() => {
+                            setActivityType('Activity');
+                            setShowDropdown(false);
+                          }}>
+                          <Text style={styles.dropdownOptionText}>
+                            Activity
+                          </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[
+                            styles.dropdownOption,
+                            {backgroundColor: activityTypeColors.Food},
+                          ]}
+                          onPress={() => {
+                            setActivityType('Food');
+                            setShowDropdown(false);
+                          }}>
+                          <Text style={styles.dropdownOptionText}>Food</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                          style={[
+                            styles.dropdownOption,
+                            {backgroundColor: activityTypeColors.Accommodation},
+                          ]}
+                          onPress={() => {
+                            setActivityType('Accommodation');
+                            setShowDropdown(false);
+                          }}>
+                          <Text style={styles.dropdownOptionText}>
+                            Accommodation
+                          </Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                          style={[
+                            styles.dropdownOption,
+                            {
+                              backgroundColor:
+                                activityTypeColors.Transportation,
+                            },
+                          ]}
+                          onPress={() => {
+                            setActivityType('Transportation');
+                            setShowDropdown(false);
+                          }}>
+                          <Text style={styles.dropdownOptionText}>
+                            Transportation
+                          </Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                          style={[
+                            styles.dropdownOption,
+                            {backgroundColor: activityTypeColors.Other},
+                          ]}
+                          onPress={() => {
+                            setActivityType('Other');
+                            setShowDropdown(false);
+                          }}>
+                          <Text style={styles.dropdownOptionText}>Other</Text>
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                  </View>
+                </View>
+                <TouchableOpacity
+                  style={{position: 'absolute', right: WP(1), top: HP(0)}}
+                  onPress={() => setActivityModalVisible(false)}>
+                  <Image source={Icons.close} style={{resizeMode: 'center'}} />
                 </TouchableOpacity>
 
-                {showDropdown && (
-                  <View style={styles.dropdownOptions}>
-                    {[
-                      {label: 'Activity', color: activityTypeColors.Activity},
-                      {label: 'Food', color: activityTypeColors.Food},
-                      {
-                        label: 'Accommodation',
-                        color: activityTypeColors.Accommodation,
-                      },
-                      {
-                        label: 'Transportation',
-                        color: activityTypeColors.Transportation,
-                      },
-                      {label: 'Other', color: activityTypeColors.Other},
-                    ].map(opt => (
-                      <TouchableOpacity
-                        key={opt.label}
-                        style={[
-                          styles.dropdownOption,
-                          {
-                            backgroundColor:
-                              activityType === opt.label ? opt.color : '#fff',
-                          },
-                        ]}
-                        onPress={() => {
-                          setActivityType(opt.label);
-                          setShowDropdown(false);
-                        }}>
-                        <Text
-                          style={[
-                            styles.dropdownOptionText,
-                            activityType === opt.label && {color: '#222'},
-                          ]}>
-                          {opt.label}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
+                <ScrollView style={styles.activityModalScroll}>
+                  <View style={styles.activityInputGroup}>
+                    <Text style={styles.activityInputLabel}>Title</Text>
+                    <TextInput
+                      placeholder="Clear a name to the telelocality"
+                      value={activityTitle}
+                      onChangeText={setActivityTitle}
+                      style={styles.activityInput}
+                      placeholderTextColor={'#AAAAAA'}
+                    />
                   </View>
-                )}
+
+                  <View style={styles.activityInputGroup}>
+                    <Text style={styles.activityInputLabel}>Cost</Text>
+                    <TextInput
+                      placeholder="Enter activity Costing"
+                      value={activityCost}
+                      onChangeText={setActivityCost}
+                      keyboardType="numeric"
+                      style={styles.activityInput}
+                      placeholderTextColor={'#AAAAAA'}
+                    />
+                  </View>
+
+                  <View style={styles.activityInputGroup}>
+                    <Text style={styles.activityInputLabel}>Start Time</Text>
+                    <TouchableOpacity style={styles.activityInput}>
+                      <Text style={styles.activityTimeText}>
+                        {activityDate}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  <View
+                    style={[styles.activityInputGroup, {alignSelf: 'center'}]}>
+                    <Text
+                      style={[
+                        styles.activityInputLabel,
+                        {left: HP(7), top: HP(1)},
+                      ]}>
+                      Duration
+                    </Text>
+                    <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                      <TouchableOpacity
+                        onPress={() => {
+                          let h = 0,
+                            m = 0;
+                          if (
+                            typeof activityDuration === 'string' &&
+                            activityDuration.includes(':')
+                          ) {
+                            [h, m] = activityDuration.split(':').map(Number);
+                          }
+                          let total = (h || 0) * 60 + (m || 0);
+                          if (total > 30) total -= 30;
+                          else total = 0;
+                          const hours = Math.floor(total / 60);
+                          const mins = total % 60;
+                          setActivityDuration(
+                            `${hours.toString().padStart(2, '0')}:${mins
+                              .toString()
+                              .padStart(2, '0')}`,
+                          );
+                        }}>
+                        <Image
+                          source={Icons.Mine}
+                          style={{resizeMode: 'center'}}
+                        />
+                      </TouchableOpacity>
+                      <Text style={styles.activityDurationText}>
+                        {(() => {
+                          let h = 0,
+                            m = 0;
+                          if (
+                            typeof activityDuration === 'string' &&
+                            activityDuration.includes(':')
+                          ) {
+                            [h, m] = activityDuration.split(':').map(Number);
+                          }
+                          return `${h.toString().padStart(2, '0')}H:${m
+                            .toString()
+                            .padStart(2, '0')}M`;
+                        })()}
+                      </Text>
+                      <TouchableOpacity
+                        onPress={() => {
+                          let h = 0,
+                            m = 0;
+                          if (
+                            typeof activityDuration === 'string' &&
+                            activityDuration.includes(':')
+                          ) {
+                            [h, m] = activityDuration.split(':').map(Number);
+                          }
+                          let total = (h || 0) * 60 + (m || 0) + 30;
+                          const hours = Math.floor(total / 60);
+                          const mins = total % 60;
+                          setActivityDuration(
+                            `${hours.toString().padStart(2, '0')}:${mins
+                              .toString()
+                              .padStart(2, '0')}`,
+                          );
+                        }}>
+                        <Image
+                          source={Icons.Plus}
+                          style={{resizeMode: 'center'}}
+                        />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+
+                  <View style={styles.activityInputGroup}>
+                    <Text style={styles.activityInputLabel}>Date/Day</Text>
+                    <TouchableOpacity style={styles.activityInput}>
+                      <Text style={styles.activityTimeText}>
+                        {activityDate}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  <View style={styles.activityInputGroup}>
+                    <Text style={styles.activityInputLabel}>
+                      Point of Contact
+                    </Text>
+                    <TextInput
+                      placeholder=""
+                      value={activityContact}
+                      onChangeText={setActivityContact}
+                      style={styles.activityInput}
+                      placeholderTextColor={'#AAAAAA'}
+                    />
+                  </View>
+
+                  <View style={styles.activityInputGroup}>
+                    <Text style={styles.activityInputLabel}>Location</Text>
+                    <TouchableOpacity style={styles.activityInput}>
+                      <Text style={styles.activityTimeText}>
+                        {activityLocation}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  <View style={styles.activityInputGroup}>
+                    <Text style={styles.activityInputLabel}>Notes</Text>
+                    <TextInput
+                      placeholder="Pooling URL instructions etc..."
+                      value={activityNotes}
+                      onChangeText={setActivityNotes}
+                      multiline
+                      style={[styles.activityInput, {height: 80}]}
+                      placeholderTextColor={'#AAAAAA'}
+                    />
+                  </View>
+                </ScrollView>
+
+                <TouchableOpacity
+                  style={styles.activitySaveButton}
+                  onPress={handleSaveActivity}>
+                  <Text style={styles.activitySaveButtonText}>
+                    Save a Action
+                  </Text>
+                </TouchableOpacity>
               </View>
             </View>
+          </Modal>
+
+          {/* Settings Modal */}
+          <Modal
+            visible={settingsModalVisible}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setSettingsModalVisible(false)}>
             <TouchableOpacity
-              style={{position: 'absolute', right: WP(1), top: HP(0)}}
-              onPress={() => setActivityModalVisible(false)}>
-              <Image source={Icons.close} style={{resizeMode: 'center'}} />
-            </TouchableOpacity>
-
-            <ScrollView style={styles.activityModalScroll}>
-              <View style={styles.activityInputGroup}>
-                <Text style={styles.activityInputLabel}>Title</Text>
-                <TextInput
-                  placeholder="Clear a name to the telelocality"
-                  value={activityTitle}
-                  onChangeText={setActivityTitle}
-                  style={styles.activityInput}
-                  placeholderTextColor={'#AAAAAA'}
-                />
-              </View>
-
-              <View style={styles.activityInputGroup}>
-                <Text style={styles.activityInputLabel}>Cost</Text>
-                <TextInput
-                  placeholder="Enter activity Costing"
-                  value={activityCost}
-                  onChangeText={setActivityCost}
-                  keyboardType="numeric"
-                  style={styles.activityInput}
-                  placeholderTextColor={'#AAAAAA'}
-                />
-              </View>
-
-              <View style={styles.activityInputGroup}>
-                <Text style={styles.activityInputLabel}>Start Time</Text>
-                <TouchableOpacity
-                  style={styles.activityInput}
-                  onPress={() => setShowTimePicker(true)}>
-                  <Text style={styles.activityTimeText}>
-                    {formatTime(activityStartTime)}
-                  </Text>
-                </TouchableOpacity>
-                {showTimePicker && (
-                  <DateTimePicker
-                    value={
-                      activityStartTime && typeof activityStartTime === 'object'
-                        ? activityStartTime
-                        : new Date()
-                    }
-                    mode="time"
-                    is24Hour={true}
-                    display="default"
-                    onChange={(event, selectedDate) => {
-                      setShowTimePicker(false);
-                      if (event.type === 'set' && selectedDate) {
-                        setActivityStartTime(selectedDate);
-                      }
-                    }}
-                  />
-                )}
-              </View>
-
-              <View style={[styles.activityInputGroup, {alignSelf: 'center'}]}>
-                <Text
-                  style={[
-                    styles.activityInputLabel,
-                    {left: HP(7), top: HP(1)},
-                  ]}>
-                  Duration
-                </Text>
-                <View style={{flexDirection: 'row', alignItems: 'center'}}>
+              style={styles.modalBackground}
+              onPress={() => setSettingsModalVisible(false)}>
+              <View style={styles.settingsModalContainer}>
+                <View style={styles.settingsModalHeader}>
+                  <CustomText style={styles.settingsModalTitle}>
+                    Settings
+                  </CustomText>
                   <TouchableOpacity
-                    style={{}}
-                    onPress={() => {
-                      let h = 0,
-                        m = 0;
-                      if (
-                        typeof activityDuration === 'string' &&
-                        activityDuration.includes(':')
-                      ) {
-                        [h, m] = activityDuration.split(':').map(Number);
-                      }
-                      let total = (h || 0) * 60 + (m || 0);
-                      if (total > 30) total -= 30;
-                      else total = 0;
-                      const hours = Math.floor(total / 60);
-                      const mins = total % 60;
-                      setActivityDuration(
-                        `${hours.toString().padStart(2, '0')}:${mins
-                          .toString()
-                          .padStart(2, '0')}`,
-                      );
-                    }}>
-                    <Image source={Icons.Mine} style={{resizeMode: 'center'}} />
+                    onPress={() => setSettingsModalVisible(false)}
+                    style={styles.settingsCloseButton}>
+                    <Icon name="times" size={20} color="#666" />
                   </TouchableOpacity>
-                  <Text style={styles.activityDurationText}>
-                    {(() => {
-                      let h = 0,
-                        m = 0;
-                      if (
-                        typeof activityDuration === 'string' &&
-                        activityDuration.includes(':')
-                      ) {
-                        [h, m] = activityDuration.split(':').map(Number);
-                      }
-                      return `${h.toString().padStart(2, '0')}H:${m
-                        .toString()
-                        .padStart(2, '0')}M`;
-                    })()}
-                  </Text>
-                  <TouchableOpacity
-                    style={{}}
-                    onPress={() => {
-                      let h = 0,
-                        m = 0;
-                      if (
-                        typeof activityDuration === 'string' &&
-                        activityDuration.includes(':')
-                      ) {
-                        [h, m] = activityDuration.split(':').map(Number);
-                      }
-                      let total = (h || 0) * 60 + (m || 0) + 30;
-                      const hours = Math.floor(total / 60);
-                      const mins = total % 60;
-                      setActivityDuration(
-                        `${hours.toString().padStart(2, '0')}:${mins
-                          .toString()
-                          .padStart(2, '0')}`,
-                      );
-                    }}>
-                    <Image source={Icons.Plus} style={{resizeMode: 'center'}} />
+                </View>
+
+                <View style={styles.settingsModalContent}>
+                  <TouchableOpacity style={styles.settingsOption}>
+                    <Icon name="edit" size={20} color="#4955E6" />
+                    <CustomText style={styles.settingsOptionText}>
+                      Edit Trip
+                    </CustomText>
+                    <Icon name="chevron-right" size={16} color="#999" />
+                  </TouchableOpacity>
+
+                  <TouchableOpacity style={styles.settingsOption}>
+                    <Icon name="share" size={20} color="#4955E6" />
+                    <CustomText style={styles.settingsOptionText}>
+                      Share Trip
+                    </CustomText>
+                    <Icon name="chevron-right" size={16} color="#999" />
+                  </TouchableOpacity>
+
+                  <TouchableOpacity style={styles.settingsOption}>
+                    <Icon name="download" size={20} color="#4955E6" />
+                    <CustomText style={styles.settingsOptionText}>
+                      Export Trip
+                    </CustomText>
+                    <Icon name="chevron-right" size={16} color="#999" />
+                  </TouchableOpacity>
+
+                  <TouchableOpacity style={styles.settingsOption}>
+                    <Icon name="trash" size={20} color="#E74C3C" />
+                    <CustomText
+                      style={[styles.settingsOptionText, {color: '#E74C3C'}]}>
+                      Delete Trip
+                    </CustomText>
+                    <Icon name="chevron-right" size={16} color="#999" />
                   </TouchableOpacity>
                 </View>
               </View>
-
-              <View style={styles.activityInputGroup}>
-                <Text style={styles.activityInputLabel}>Date/Day</Text>
-                <TouchableOpacity
-                  style={styles.activityInput}
-                  onPress={() => setShowDatePicker(true)}>
-                  <Text style={styles.activityTimeText}>
-                    {formatDate(activityDate)}
-                  </Text>
-                </TouchableOpacity>
-                {showDatePicker && (
-                  <DateTimePicker
-                    value={
-                      activityDate && typeof activityDate === 'object'
-                        ? activityDate
-                        : new Date()
-                    }
-                    mode="date"
-                    display="default"
-                    onChange={(event, selectedDate) => {
-                      setShowDatePicker(false);
-                      if (event.type === 'set' && selectedDate) {
-                        setActivityDate(selectedDate);
-                      }
-                    }}
-                  />
-                )}
-              </View>
-
-              <View style={styles.activityInputGroup}>
-                <Text style={styles.activityInputLabel}>Point of Contact</Text>
-                <TextInput
-                  placeholder=""
-                  value={activityContact}
-                  onChangeText={setActivityContact}
-                  style={styles.activityInput}
-                  placeholderTextColor={'#AAAAAA'}
-                />
-              </View>
-
-              <View style={styles.activityInputGroup}>
-                <Text style={styles.activityInputLabel}>Location</Text>
-                <TouchableOpacity style={styles.activityInput}>
-                  <Text style={styles.activityTimeText}>
-                    {activityLocation}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.activityInputGroup}>
-                <Text style={styles.activityInputLabel}>Notes</Text>
-                <TextInput
-                  placeholder="Pooling URL instructions etc..."
-                  value={activityNotes}
-                  onChangeText={setActivityNotes}
-                  multiline
-                  style={[styles.activityInput, {height: 80}]}
-                  placeholderTextColor={'#AAAAAA'}
-                />
-              </View>
-            </ScrollView>
-            <TouchableOpacity
-              style={styles.activitySaveButton}
-              onPress={handleSaveActivity}>
-              <Text style={styles.activitySaveButtonText}>Save a Action</Text>
             </TouchableOpacity>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
+          </Modal>
+        </>
+      )}
     </View>
   );
 };
@@ -1301,47 +1726,107 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFD580',
     borderRadius: 4,
   },
-  dropdownHeader: {
+  // Trip tab styles (merged)
+  item: {
+    flexDirection: 'row',
+    marginBottom: 24,
+    alignItems: 'flex-start',
+  },
+  dottedLine: {
+    flex: 1,
+    borderLeftWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: '#ccc',
+    marginTop: 2,
+  },
+  date: {fontWeight: 'bold', marginRight: HP(2), color: Colors.textB},
+  dot: {
+    width: HP(2),
+    height: HP(2),
+    borderRadius: HP(5),
+    marginRight: 10,
+    right: HP(1),
+  },
+  details: {flex: 1, marginLeft: 8},
+  city: {
+    fontSize: FS(2),
+    color: Colors.textB,
+    fontFamily: Fonts.MontserratBold,
+  },
+  subText: {fontSize: 12, marginLeft: HP(1.5)},
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: HP(2),
+    right: HP(1),
+  },
+  actions: {
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    marginLeft: 8,
+    height: 80,
+  },
+  circle: {marginHorizontal: HP(0.5)},
+  modalBackground: {
+    flex: 1,
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  modalContainer: {
+    margin: 40,
+    padding: 20,
+    borderRadius: 10,
+    backgroundColor: '#fff',
+  },
+  modalItem: {paddingVertical: 10},
+  modalText: {fontSize: 16, color: '#333'},
+  timeline: {alignItems: 'center', marginRight: HP(1)},
+
+  // Settings Modal Styles
+  settingsModalContainer: {
+    backgroundColor: '#fff',
+    borderRadius: HP(2),
+    margin: WP(10),
+    maxHeight: HP(50),
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  settingsModalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8,
-    width: WP(75),
-  },
-  dropdownOptions: {
-    position: 'absolute',
-    top: 40,
-    left: 0,
-    right: 0,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    elevation: 3,
-    zIndex: 10,
-  },
-  dropdownOption: {
-    padding: 12,
+    padding: HP(3),
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
   },
-  dropdownOptionText: {
-    color: '#BFBFBF',
-    fontSize: 14,
+  settingsModalTitle: {
+    fontSize: FS(2.2),
+    fontFamily: Fonts.MontserratBold,
+    color: '#4955E6',
   },
-  dropZone: {
-    width: 16,
+  settingsCloseButton: {
+    padding: HP(0.5),
+  },
+  settingsModalContent: {
+    padding: HP(2),
+  },
+  settingsOption: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    alignSelf: 'stretch',
+    paddingVertical: HP(2),
+    paddingHorizontal: HP(2),
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
   },
-  dropZoneActive: {
-    backgroundColor: '#FFD580',
-    borderRadius: 8,
-  },
-  dropZoneIndicator: {
-    width: 8,
-    height: '80%',
-    backgroundColor: '#FFD580',
-    borderRadius: 4,
+  settingsOptionText: {
+    flex: 1,
+    fontSize: FS(1.8),
+    fontFamily: Fonts.MontserratMedium,
+    color: '#333',
+    marginLeft: HP(2),
   },
 });
 
