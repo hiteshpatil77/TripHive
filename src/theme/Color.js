@@ -1,7 +1,7 @@
 const Colors = {
   Main: '#FFA015',
   // lightMain: '#FFA015',
-  secondary: 'blue',
+  secondary: '#4955E6',
   white: 'white',
   black: 'black',
   gray: 'gray',

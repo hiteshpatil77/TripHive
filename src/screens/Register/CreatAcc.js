@@ -18,6 +18,7 @@ import Icons from '../../theme/Icons';
 import Toast from 'react-native-toast-message';
 import RoundButton from '../../components/RoundButton';
 import Fonts from '../../theme/Fonts';
+import {RegisterUser} from '../../api/apiService';
 
 export default function CreatAcc({navigation}) {
   const [name, setName] = useState('');
@@ -28,7 +29,66 @@ export default function CreatAcc({navigation}) {
   const [isChecked, setIsChecked] = useState(false);
   console.log('name-=-=', name);
 
-  const handleRegister = () => {
+  // const handleRegister = () => {
+  //   // Email Validation
+  //   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  //   if (!emailRegex.test(email)) {
+  //     Toast.show({
+  //       type: 'error',
+  //       text1: 'Error',
+  //       text2: 'Please enter a valid email address.',
+  //     });
+  //     return;
+  //   }
+
+  //   // Phone Number Validation (Exactly 10 digits)
+  //   const phoneRegex = /^\d{10}$/;
+  //   if (!phoneRegex.test(phone)) {
+  //     Toast.show({
+  //       type: 'error',
+  //       text1: 'Error',
+  //       text2: 'Please enter a valid 10-digit phone number.',
+  //     });
+  //     return;
+  //   }
+
+  //   if (!name || !phone || !email || !password || !confirmPassword) {
+  //     Toast.show({
+  //       type: 'error',
+  //       text1: 'Error',
+  //       text2: 'All fields are required.',
+  //     });
+  //     return;
+  //   }
+
+  //   if (password !== confirmPassword) {
+  //     Toast.show({
+  //       type: 'error',
+  //       text1: 'Error',
+  //       text2: 'Passwords do not match.',
+  //     });
+  //     return;
+  //   }
+
+  //   if (!isChecked) {
+  //     Toast.show({
+  //       type: 'error',
+  //       text1: 'Error',
+  //       text2: 'You must agree to the Terms & Conditions.',
+  //     });
+  //     return;
+  //   }
+
+  //   // Proceed with registration logic
+  //   Toast.show({
+  //     type: 'success',
+  //     text1: 'Success',
+  //     text2: 'Account created successfully!',
+  //   });
+
+  //   navigation.navigate('OtpVerify');
+  // };
+  const handleRegister = async () => {
     // Email Validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
@@ -40,52 +100,42 @@ export default function CreatAcc({navigation}) {
       return;
     }
 
-    // Phone Number Validation (Exactly 10 digits)
-    const phoneRegex = /^\d{10}$/;
-    if (!phoneRegex.test(phone)) {
+    // Required fields
+    if (!name || !email) {
       Toast.show({
         type: 'error',
         text1: 'Error',
-        text2: 'Please enter a valid 10-digit phone number.',
+        text2: 'Name & Email are required.',
       });
       return;
     }
 
-    if (!name || !phone || !email || !password || !confirmPassword) {
+    try {
+      const res = await RegisterUser(name, email);
+      console.log('responce register=--=-=', res);
+
+      if (res?.success) {
+        Toast.show({
+          type: 'success',
+          text1: 'Success',
+          text2: 'OTP sent to your email!',
+        });
+
+        navigation.navigate('BottomTab');
+      } else {
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: res?.message || 'Failed to register.',
+        });
+      }
+    } catch (error) {
       Toast.show({
         type: 'error',
         text1: 'Error',
-        text2: 'All fields are required.',
+        text2: 'Something went wrong!',
       });
-      return;
     }
-
-    if (password !== confirmPassword) {
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'Passwords do not match.',
-      });
-      return;
-    }
-
-    if (!isChecked) {
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'You must agree to the Terms & Conditions.',
-      });
-      return;
-    }
-
-    // Proceed with registration logic
-    Toast.show({
-      type: 'success',
-      text1: 'Success',
-      text2: 'Account created successfully!',
-    });
-
-    navigation.navigate('OtpVerify'); // Navigate to Home or desired screen
   };
 
   return (
@@ -122,13 +172,13 @@ export default function CreatAcc({navigation}) {
               value={name}
               onChangeText={setName}
             />
-            <Input
+            {/* <Input
               Place="Enter Phone Number"
               icon="phone-call"
               iconType="Feather"
               value={phone}
               onChangeText={setPhone}
-            />
+            /> */}
             <Input
               Place="Enter Email"
               icon="mail-outline"
@@ -136,7 +186,7 @@ export default function CreatAcc({navigation}) {
               value={email}
               onChangeText={setEmail}
             />
-            <Input
+            {/* <Input
               Place="Enter Password"
               icon="lock"
               iconType="SimpleLineIcons"
@@ -151,9 +201,9 @@ export default function CreatAcc({navigation}) {
               eye={true}
               value={confirmPassword}
               onChangeText={setConfirmPassword}
-            />
+            /> */}
           </View>
-          <View
+          {/* <View
             style={{
               flexDirection: 'row',
               marginVertical: HP(2),
@@ -176,8 +226,8 @@ export default function CreatAcc({navigation}) {
                 Terms & Conditions
               </Text>
             </Text>
-          </View>
-          <View
+          </View> */}
+          {/* <View
             style={{
               marginVertical: HP(1),
               borderWidth: 0.5,
@@ -196,7 +246,7 @@ export default function CreatAcc({navigation}) {
               fontFamily: Fonts.Regular,
             }}>
             Or Register With
-          </Text>
+          </Text> */}
           <View style={{flexDirection: 'row', alignSelf: 'center', flex: 0.7}}>
             <TouchableOpacity style={styles.socialButton}>
               <EvilIcons
@@ -228,7 +278,7 @@ export default function CreatAcc({navigation}) {
             <TouchableOpacity onPress={() => navigation.navigate('SignIn')}>
               <Text style={{fontFamily: Fonts.Regular}}>Sign In</Text>
             </TouchableOpacity>
-            <RoundButton onp={() => navigation.navigate('OtpVerify')} />
+            <RoundButton onp={handleRegister} />
           </View>
         </View>
       </View>

@@ -5,6 +5,7 @@ import Toast from 'react-native-toast-message';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 
 export default function App() {
+  if (1 == 2) console.log = () => {};
   return (
     <GestureHandlerRootView style={{flex: 1}}>
       <Route />

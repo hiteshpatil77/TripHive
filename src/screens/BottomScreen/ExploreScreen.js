@@ -1,4 +1,5 @@
 import {
+  Alert,
   FlatList,
   Image,
   ImageBackground,
@@ -70,14 +71,17 @@ export default function ExploreScreen({navigation}) {
     {
       Pic: Icons.trn,
       Tag: 'Trains',
-    },
-    {
-      Pic: Icons.BS,
-      Tag: 'Buses',
+      ScreenName: 'Trains',
     },
     {
       Pic: Icons.stys,
       Tag: 'Stays',
+      ScreenName: 'Stays',
+    },
+    {
+      Pic: Icons.BS,
+      Tag: 'Buses',
+      ScreenName: 'Buses',
     },
   ];
   const Explore = [
@@ -142,14 +146,26 @@ export default function ExploreScreen({navigation}) {
       place: 'Machu Picchu, Peru',
     },
   ];
+  const handleNavigation = screenName => {
+    if (screenName) {
+      navigation.navigate(screenName);
+    } else {
+      Alert.alert('Screen not found!');
+      // console.warn(`Screen name is missing or does not exist.`);
+    }
+  };
 
   const BetsFun = ({item}) => (
-    <TouchableOpacity style={{marginRight: WP(4), marginTop: HP(2)}}>
+    <TouchableOpacity
+      style={{marginTop: HP(2)}}
+      onPress={() => handleNavigation(item.ScreenName)}>
       <Image
         style={{
           height: HP(15),
           width: WP(40),
           borderRadius: HP(2),
+          marginHorizontal: HP(1),
+          resizeMode: 'contain',
         }}
         source={item.Pic}
       />
@@ -369,7 +385,10 @@ export default function ExploreScreen({navigation}) {
     </TouchableOpacity>
   );
   return (
-    <ScrollView>
+    <ScrollView
+      showsVerticalScrollIndicator={false}
+      style={{flex: 1, backgroundColor: '#f2f2f2ff'}}>
+      <StatusBar backgroundColor={'#f2f2f2ff'} />
       {/* <ScrollView>
         <StatusBar barStyle={'dark-content'} backgroundColor={'white'} />
         <View>
@@ -686,14 +705,11 @@ export default function ExploreScreen({navigation}) {
           }}></View>
       </ScrollView> */}
       <View style={{flex: 1}}>
-        {/* <StatusBar barStyle={'dark-content'} backgroundColor={'white'} /> */}
         <View
           style={{
             flexDirection: 'row',
             justifyContent: 'space-between',
             alignItems: 'center',
-            // marginTop: HP(5),
-            // backgroundColor: '#000',
             height: HP(9),
             borderBottomWidth: 1,
             paddingHorizontal: WP(1),
@@ -705,26 +721,41 @@ export default function ExploreScreen({navigation}) {
               resizeMode: 'contain',
               height: HP(5),
               // marginLeft: WP(5),
-              marginTop: HP(1),
+              // marginTop: HP(1),
               tintColor: Colors.Main,
             }}
           />
           <CustomText
-            style={{fontSize: FS(3), fontFamily: Fonts.MontserratExtraBold}}
+            style={{
+              fontSize: FS(2.9),
+              fontFamily: Fonts.MontserratBold,
+              marginTop: HP(1),
+              right: HP(1.5),
+            }}
             children={'Explore'}
           />
-          <View
+          <TouchableOpacity
             style={{
-              height: HP(5),
-              width: HP(5),
-              borderRadius: HP(2.5),
+              height: HP(6),
+              width: HP(6),
+              borderRadius: HP(3),
               // backgroundColor: 'red',
-            }}></View>
+            }}>
+            <Image
+              style={{
+                height: HP(6.5),
+                width: HP(6.5),
+                resizeMode: 'contain',
+                right: HP(1.5),
+              }}
+              source={Icons.profile}
+            />
+          </TouchableOpacity>
         </View>
         <View
           style={{
             // height: HP(78),
-            paddingHorizontal: HP(4),
+            paddingHorizontal: HP(3),
             marginTop: HP(2),
             // backgroundColor: 'red',
           }}>
@@ -732,37 +763,49 @@ export default function ExploreScreen({navigation}) {
             style={{fontSize: FS(2.5), fontFamily: Fonts.MontserratBold}}
             children={'Find Best Deals'}
           />
-          <FlatList data={Best} renderItem={BetsFun} numColumns={2} />
+          <View
+            style={
+              {
+                // alignItems: 'center',
+                // justifyContent: 'center',
+                // backgroundColor: 'orange',
+              }
+            }>
+            <FlatList data={Best} renderItem={BetsFun} numColumns={2} />
+          </View>
           <Image
             source={Icons.homePlane}
             style={{
-              height: HP(18),
+              height: HP(15),
               width: WP(85),
               resizeMode: 'contain',
               marginTop: HP(2),
+              alignSelf: 'center',
               // tintColor: Colors.Main,
             }}
           />
-          <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+          <View style={{flexDirection: 'row', justifyContent: 'space-around'}}>
             <TouchableOpacity
-              style={[styles.tracking, {backgroundColor: '#FFD06B'}]}>
+              style={[styles.tracking, {backgroundColor: '#ffd67dff'}]}>
               <CustomText
                 style={{
                   padding: HP(3),
                   fontSize: FS(2),
                   fontFamily: Fonts.MontserratBold,
+                  color: '#3E3E54',
                 }}
                 children={`Live\nTracking`}
               />
               {/* <View style={{flex: 1, backgroundColor: '#FFD06B'}}></View> */}
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.tracking, {backgroundColor: '#80BFFF'}]}>
+              style={[styles.tracking, {backgroundColor: '#9dc9f5ff'}]}>
               <CustomText
                 style={{
                   padding: HP(3),
                   fontSize: FS(2),
                   fontFamily: Fonts.MontserratBold,
+                  color: '#3E3E54',
                 }}
                 children={`PNR\nStatus`}
               />
@@ -771,14 +814,6 @@ export default function ExploreScreen({navigation}) {
           <View style={{height: HP(12)}}></View>
         </View>
       </View>
-      {/* <Image
-        source={Icons.WhiteBG}
-        style={{
-          position: 'absolute',
-          bottom: HP(0),
-          resizeMode: 'cover',
-        }}
-      /> */}
     </ScrollView>
   );
 }
@@ -786,13 +821,9 @@ export default function ExploreScreen({navigation}) {
 const styles = StyleSheet.create({
   headerTamplete: {fontSize: FS(3), fontFamily: Fonts.MontserratBold},
   tracking: {
-    height: HP(15),
+    height: HP(16),
     width: WP(40),
-    // alignSelf: 'center',
-    // backgroundColor: Colors.lightGray,
     marginTop: HP(3),
-    borderRadius: HP(5),
-    // alignItems: 'center',
-    // justifyContent: 'center',
+    borderRadius: HP(4),
   },
 });

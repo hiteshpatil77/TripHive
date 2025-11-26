@@ -1,4 +1,5 @@
 import {
+  ActivityIndicator,
   SafeAreaView,
   StyleSheet,
   Text,
@@ -22,7 +23,7 @@ import Animated, {
   withSpring,
   runOnJS,
 } from 'react-native-reanimated';
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {FS, HP, WP} from '../../utils/Dimention';
 import CustomText from '../../components/CustomText';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -30,41 +31,247 @@ import Entypo from 'react-native-vector-icons/Entypo';
 import Fonts from '../../theme/Fonts';
 import Icons from '../../theme/Icons';
 import {FlatList} from 'react-native-gesture-handler';
+import PaidByModal from '../../components/modal/PaidByModal';
+import AiPlanner from '../TripScreen/AiPlanner';
+import {
+  CreateExpense,
+  CreateGroup,
+  getAllFriend,
+  getAllGroup,
+} from '../../api/apiService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function AddExpense({navigation}) {
   const [selectedCurrency, setSelectedCurrency] = useState({
     symbol: '₹',
     code: 'INR',
   });
-  const [showCurrencyModal, setShowCurrencyModal] = useState(false);
+  const total = parseFloat(amount) || 0;
   const [amount, setAmount] = useState('');
+  const [showCurrencyModal, setShowCurrencyModal] = useState(false);
+  const [splitNum, setSplitNum] = useState('');
+  const [amt, setAmt] = useState('');
+  const [showModal, setShowModal] = useState(false);
   const [splitBy, setSplitBy] = useState('');
-  const [splitResult, setSplitResult] = useState(null);
+  const [splitResult, setSplitResult] = useState(0);
   const [percentageValues, setPercentageValues] = useState({});
   const [showPaidByModal, setShowPaidByModal] = useState(false);
-  const [paidByMode, setPaidByMode] = useState('single'); // 'single' or 'multiple'
-  const [selectedPayer, setSelectedPayer] = useState(null); // for single
-  const [multiplePayers, setMultiplePayers] = useState({}); // for multiple, e.g. {userId: amount}
-  const [friends, setFriends] = useState([
-    {id: '1', name: 'You'},
-    {id: '2', name: 'Vansh'},
-    {id: '3', name: 'rahul'},
-    {id: '4', name: 'Shivam'},
-    {id: '5', name: 'tanishq'},
-    {id: '5', name: 'tanishq'},
-    {id: '5', name: 'tanishq'},
-    {id: '5', name: 'tanishq'},
-    {id: '5', name: 'tanishq'},
-    {id: '5', name: 'shq'},
-    {id: '5', name: 'tanishq'},
-    {id: '5', name: 'tanishq'},
-    {id: '5', name: 'tanishq'},
-  ]);
+  const [paidByMode, setPaidByMode] = useState('single');
+  const [selectedPayer, setSelectedPayer] = useState(null);
+  const [multiplePayers, setMultiplePayers] = useState({});
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [groupId, setGroupId] = useState('');
+  const [selectedPayersList, setSelectedPayersList] = useState([]);
+  const [friends, setFriends] = useState([]);
+  const [groupOptions, setGroupOptions] = useState([]);
+  const [selectedGroup, setSelectedGroup] = useState(null);
+  const [selectedPeople, setSelectedPeople] = useState([]);
+  const [showPeopleModal, setShowPeopleModal] = useState(false);
+  const [peopleTab, setPeopleTab] = useState('groups');
+  const [isFetchingPeople, setIsFetchingPeople] = useState(false);
+  const [isGroupSubmitting, setIsGroupSubmitting] = useState(false);
   const [selectedPayerName, setSelectedPayerName] = useState('');
   const [showSplitByModal, setShowSplitByModal] = useState(false);
-  const [splitByMode, setSplitByMode] = useState('equally'); // 'equally', 'unequally', 'percentage', 'ratio'
-  const [splitValues, setSplitValues] = useState({}); // {userId: value}
-  const [selectedSplitters, setSelectedSplitters] = useState([]); // for equally
+  const [splitByMode, setSplitByMode] = useState('equally');
+  const [splitValues, setSplitValues] = useState({});
+  const [selectedSplitters, setSelectedSplitters] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
+
+  useEffect(() => {
+    const fetchPeople = async () => {
+      try {
+        setIsFetchingPeople(true);
+        const [token, storedUserData] = await Promise.all([
+          AsyncStorage.getItem('token'),
+          AsyncStorage.getItem('userData'),
+        ]);
+
+        console.log('storedUserData-=-=-=', storedUserData);
+        const parsedUser = storedUserData ? JSON.parse(storedUserData) : null;
+        console.log('parsedUser-=-=-=', parsedUser);
+
+        setCurrentUser(parsedUser);
+
+        const [groupResponse, friendResponse] = await Promise.all([
+          getAllGroup(token),
+          getAllFriend(token),
+        ]);
+        console.log('friendResponse-=-=-=', friendResponse);
+
+        const fetchedFriends = friendResponse?.data || [];
+
+        setGroupOptions(groupResponse?.data || []);
+        setFriends(appendSelfToFriends(fetchedFriends, parsedUser));
+      } catch (error) {
+        console.error('Error fetching groups or friends:', error);
+      } finally {
+        setIsFetchingPeople(false);
+      }
+    };
+
+    fetchPeople();
+  }, []);
+
+  const handleSelectGroup = group => {
+    setSelectedGroup(group);
+    setGroupId(group?.id || '');
+  };
+
+  const toggleFriendSelection = friendId => {
+    setSelectedPeople(prev => {
+      const alreadySelected = prev.includes(friendId);
+      const updated = alreadySelected
+        ? prev.filter(id => id !== friendId)
+        : [...prev, friendId];
+      setSelectedSplitters(updated);
+      return updated;
+    });
+  };
+
+  const resolveUserId = user => {
+    if (!user) {
+      return null;
+    }
+    return (
+      user?.id ||
+      user?._id ||
+      user?.userId ||
+      user?.user_id ||
+      user?.userID ||
+      user?.uid ||
+      user?.profileId ||
+      null
+    );
+  };
+
+  const appendSelfToFriends = (friendList, user) => {
+    const safeList = Array.isArray(friendList) ? [...friendList] : [];
+    if (!user) {
+      return safeList;
+    }
+
+    const userId = resolveUserId(user) || 'self';
+    const normalizedUserId = String(userId);
+    const displayName =
+      user?.name || user?.fullName || user?.username || user?.email || 'You';
+
+    const alreadyExists = safeList.some(
+      friend => String(friend?.id) === normalizedUserId,
+    );
+
+    const selfEntry = {
+      id: normalizedUserId,
+      name: displayName,
+      email: user?.email || '',
+      isSelf: true,
+    };
+
+    return alreadyExists ? safeList : [selfEntry, ...safeList];
+  };
+
+  const getCurrentUserId = () => {
+    const id = resolveUserId(currentUser);
+    return id ? String(id) : null;
+  };
+
+  const getFriendName = friend => {
+    if (!friend) {
+      return 'Friend';
+    }
+    if (friend.isSelf) {
+      return 'You';
+    }
+    return friend?.name || friend?.fullName || friend?.email || 'Friend';
+  };
+
+  const getFriendInitial = friend => {
+    const name = getFriendName(friend);
+    return name?.charAt(0)?.toUpperCase() || 'F';
+  };
+
+  const selectedFriendsLabel =
+    selectedPeople.length > 0
+      ? (() => {
+          const names = friends
+            .filter(friend => selectedPeople.includes(friend.id))
+            .map(getFriendName);
+          if (names.length === 0) {
+            return `${selectedPeople.length} friend${
+              selectedPeople.length > 1 ? 's' : ''
+            } selected`;
+          }
+          const [first, second, ...rest] = names;
+          if (!second) {
+            return first;
+          }
+          const base = `${first}, ${second}`;
+          return rest.length > 0 ? `${base} +${rest.length} more` : base;
+        })()
+      : '';
+
+  const handleCreateGroupFromSelection = async () => {
+    if (!title.trim()) {
+      alert('Please enter a Title to use as the group name.');
+      return;
+    }
+
+    if (selectedPeople.length === 0) {
+      alert('Select at least one friend to include in the group.');
+      return;
+    }
+
+    const memberIds = Array.from(
+      new Set(
+        [...selectedPeople, getCurrentUserId()].filter(id => id && id.length),
+      ),
+    );
+
+    if (memberIds.length === 0) {
+      alert('Unable to determine members for the group.');
+      return;
+    }
+
+    try {
+      setIsGroupSubmitting(true);
+      const token = await AsyncStorage.getItem('token');
+      if (!token) {
+        throw new Error('Missing authentication token. Please sign in again.');
+      }
+
+      const response = await CreateGroup(
+        title.trim(),
+        description?.trim() || 'Created from Add Expense',
+        '',
+        memberIds,
+        token,
+      );
+
+      const createdGroup = response?.data || response;
+
+      if (createdGroup) {
+        setGroupOptions(prev => {
+          const exists = prev.some(group => group.id === createdGroup.id);
+          if (exists) {
+            return prev.map(group =>
+              group.id === createdGroup.id ? createdGroup : group,
+            );
+          }
+          return [createdGroup, ...prev];
+        });
+        handleSelectGroup(createdGroup);
+        setShowPeopleModal(false);
+        alert('Group created successfully.');
+      } else {
+        alert('Group created but no data was returned.');
+      }
+    } catch (error) {
+      console.error('Error creating group:', error);
+      alert(error?.message || 'Failed to create group. Please try again.');
+    } finally {
+      setIsGroupSubmitting(false);
+    }
+  };
 
   const currencies = [
     {symbol: '₹', code: 'INR'},
@@ -73,22 +280,22 @@ export default function AddExpense({navigation}) {
     {symbol: '£', code: 'GBP'},
     {symbol: '¥', code: 'JPY'},
     {symbol: 'S$', code: 'SGD'},
-    // {symbol: 'HK$', code: 'HKD'},
   ];
+  const handleOpenPaidByModal = () => {
+    setShowModal(true);
+    setPaidByMode('single');
+    // Don't reset paidByMode here, use the current state
+  };
 
-  const handleAddExpense = () => {
-    const amt = parseFloat(amount);
-    const splitNum = parseInt(splitBy, 10);
-
-    if (!amt || !splitNum || splitNum <= 0) {
-      alert('Please enter valid amount and split number');
-      return;
-    }
-
-    const perPerson = amt / splitNum;
+  // Add a function to handle modal close and reset if needed
+  const handleClosePaidByModal = () => {
+    setShowModal(false);
+  };
+  const handleSplit = () => {
+    setShowSplitByModal(true);
+    const perPerson =
+      splitNum > 0 && amt ? parseFloat(amt) / parseFloat(splitNum) : 0;
     setSplitResult(perPerson);
-    // You can also navigate or save the expense here
-    // navigation.goBack();
   };
 
   const equallyShares = () => {
@@ -121,14 +328,6 @@ export default function AddExpense({navigation}) {
     percentageShares[id] = (parseFloat(amountValue) || 0).toFixed(2);
   });
 
-  // Calculate percentage based on amount input
-  const calculatePercentage = amountValue => {
-    const totalAmount = parseFloat(amount) || 0;
-    const individualAmount = parseFloat(amountValue) || 0;
-    if (totalAmount === 0) return 0;
-    return ((individualAmount / totalAmount) * 100).toFixed(1);
-  };
-
   const totalShares = Object.values(splitValues).reduce(
     (sum, v) => sum + (parseFloat(v) || 0),
     0,
@@ -160,6 +359,112 @@ export default function AddExpense({navigation}) {
   const totalExpenseAmount = parseFloat(amount) || 0;
   const amountLeft = totalExpenseAmount - totalPaidAmount;
   const isPaymentComplete = Math.abs(amountLeft) < 0.01;
+
+  const handleAddExpense = async () => {
+    try {
+      const expenseTitle = title;
+      const expenseDescription = description;
+      const expenseAmount = parseFloat(amount);
+      const expenseCurrency = 'INR';
+      const expenseSplitType = splitByMode;
+      const expenseGroupId = groupId;
+      const token = await AsyncStorage.getItem('token');
+
+      if (!token) {
+        alert('Missing authentication token. Please sign in again.');
+        return;
+      }
+
+      // ✅ Handle who paid
+      let expensePaidBy = null;
+      let expensePayers = [];
+
+      if (paidByMode === 'single') {
+        expensePaidBy = selectedPayer; // single payer ID
+        expensePayers = [{userId: selectedPayer, amount: expenseAmount}];
+      } else {
+        // multiple payers mode
+        expensePaidBy = Object.keys(multiplePayers).filter(
+          id => parseFloat(multiplePayers[id]) > 0,
+        );
+        expensePayers = Object.entries(multiplePayers).map(
+          ([userId, amount]) => ({
+            userId,
+            amount: parseFloat(amount) || 0,
+          }),
+        );
+      }
+
+      let expenseSplits = [];
+      switch (splitByMode) {
+        case 'equally':
+          const equalShares = equallyShares();
+          expenseSplits = Object.entries(equalShares).map(
+            ([userId, amount]) => ({
+              userId,
+              amount: parseFloat(amount),
+            }),
+          );
+          break;
+
+        case 'unequally':
+          expenseSplits = Object.entries(splitValues).map(
+            ([userId, amount]) => ({
+              userId,
+              amount: parseFloat(amount) || 0,
+            }),
+          );
+          break;
+
+        case 'percentage':
+          expenseSplits = Object.entries(splitValues).map(
+            ([userId, amount]) => ({
+              userId,
+              amount: parseFloat(amount) || 0,
+            }),
+          );
+          break;
+
+        case 'ratio':
+          expenseSplits = Object.entries(ratioShares).map(
+            ([userId, amount]) => ({
+              userId,
+              amount: parseFloat(amount) || 0,
+            }),
+          );
+          break;
+
+        default:
+          expenseSplits = [];
+      }
+
+      // ✅ API call with selected payers
+      const response = await CreateExpense(
+        expenseTitle,
+        expenseDescription,
+        expenseAmount,
+        expenseCurrency,
+        expensePaidBy,
+        expenseSplitType,
+        expenseSplits,
+        expenseGroupId,
+        expensePayers, // 👈 include for reference if API supports it
+        token,
+      );
+
+      console.log('response-=-= createExpense', response);
+      alert('Expense added successfully!');
+    } catch (error) {
+      console.error('Error creating expense:', error);
+      alert('Something went wrong while adding the expense.');
+    }
+  };
+
+  const handleSelectPayers = payers => {
+    setSelectedPayersList(payers); // array of { id, name, amount }
+    console.log('Selected payers:', payers);
+  };
+  console.log('selectelist-=-=-=', selectedPayersList);
 
   return (
     <SafeAreaView style={{flex: 1}}>
@@ -225,6 +530,37 @@ export default function AddExpense({navigation}) {
               style={{color: '#9B9B9B'}}
             />
           </View>
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => setShowPeopleModal(true)}
+            style={{
+              backgroundColor: '#ECECEC',
+              borderRadius: HP(1.2),
+              marginBottom: HP(2),
+              paddingHorizontal: HP(2),
+              paddingVertical: HP(1.5),
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}>
+            <View style={{flex: 1, marginRight: WP(2)}}>
+              <CustomText
+                style={{
+                  color: selectedGroup ? '#3E3E54' : '#9B9B9B',
+                  fontFamily: Fonts.MontserratMedium,
+                }}>
+                {selectedGroup?.name ||
+                  selectedFriendsLabel ||
+                  'Select group or friends'}
+              </CustomText>
+            </View>
+            <Ionicons
+              name="chevron-down"
+              color={'#4955E6'}
+              size={18}
+              style={{marginLeft: WP(2)}}
+            />
+          </TouchableOpacity>
           <CustomText
             children={'Title'}
             style={{fontFamily: Fonts.MontserratBold, color: '#3E3E54'}}
@@ -237,6 +573,8 @@ export default function AddExpense({navigation}) {
               paddingHorizontal: HP(2),
               fontFamily: Fonts.MontserratMedium,
             }}
+            value={title}
+            onChangeText={setTitle}
             placeholder="Add new expense"
             placeholderTextColor={'#3E3E54'}
           />
@@ -261,6 +599,7 @@ export default function AddExpense({navigation}) {
                 marginVertical: HP(1),
                 width: WP(60),
                 paddingHorizontal: HP(2),
+                fontFamily: Fonts.MontserratRegular,
               }}
             />
             <TouchableOpacity
@@ -369,10 +708,7 @@ export default function AddExpense({navigation}) {
               flexDirection: 'row',
               alignItems: 'center',
             }}
-            onPress={() => {
-              setPaidByMode('single');
-              setShowPaidByModal(true);
-            }}>
+            onPress={handleOpenPaidByModal}>
             <View
               style={{
                 paddingHorizontal: HP(2),
@@ -382,7 +718,15 @@ export default function AddExpense({navigation}) {
               }}>
               <CustomText
                 style={{color: '#3E3E54', fontFamily: Fonts.MontserratMedium}}>
-                {paidByMode === 'multiple' ? 'Multiple' : selectedPayerName}
+                <CustomText>
+                  {paidByMode === 'multiple'
+                    ? `Multiple (${
+                        Object.keys(multiplePayers).filter(
+                          id => parseFloat(multiplePayers[id]) > 0,
+                        ).length
+                      } payers)`
+                    : selectedPayerName || 'Select payer'}
+                </CustomText>
               </CustomText>
             </View>
             <Ionicons name={'chevron-down'} color={'#4955E6'} size={20} />
@@ -404,7 +748,7 @@ export default function AddExpense({navigation}) {
               flexDirection: 'row',
               alignItems: 'center',
             }}
-            onPress={() => setShowSplitByModal(true)}>
+            onPress={handleSplit}>
             <View
               style={{
                 paddingHorizontal: HP(2),
@@ -438,20 +782,15 @@ export default function AddExpense({navigation}) {
             }}>
             <TextInput
               multiline
-              numberOfLines={6}
-              // placeholder={'Add a description...'}
+              numberOfLines={4}
               style={{
                 width: WP(80),
                 fontFamily: Fonts.MontserratMedium,
-                paddingRight: HP(1),
+                paddingLeft: HP(1.5),
               }}
+              value={description}
+              onChangeText={setDescription}
             />
-            {/* <Entypo
-              style={{marginTop: HP(1)}}
-              name={'attachment'}
-              color={'#4955E6'}
-              size={20}
-            /> */}
           </View>
           <TouchableOpacity
             style={{
@@ -463,6 +802,8 @@ export default function AddExpense({navigation}) {
               backgroundColor: '#4955E6',
               borderRadius: HP(5),
               marginTop: HP(10),
+              position: 'absolute',
+              bottom: HP(-5),
             }}
             onPress={handleAddExpense}>
             <CustomText
@@ -470,332 +811,194 @@ export default function AddExpense({navigation}) {
               children={'Add Expense'}
             />
           </TouchableOpacity>
-          {splitResult !== null && (
+          {/* {!isNaN(splitResult) && (
             <CustomText
-              style={{marginTop: HP(2), color: '#4955E6', fontSize: FS(2)}}
-              children={`Each person pays: ${
-                selectedCurrency.symbol
-              }${splitResult.toFixed(2)}`}
-            />
-          )}
+              style={{marginTop: HP(2), color: '#4955E6', fontSize: FS(2)}}>
+              Each person pays: {selectedCurrency.symbol}
+              {Number(splitResult).toFixed(2)}
+            </CustomText>
+          )} */}
         </View>
       </View>
       <Modal
-        visible={showPaidByModal}
+        visible={showPeopleModal}
         transparent
-        animationType="slide"
-        onRequestClose={() => setShowPaidByModal(false)}>
-        <View
-          style={{
-            // flex: 0.6,
-            // justifyContent: 'flex-start',
-            backgroundColor: 'rgba(0,0,0,0.2)',
-            top: HP(4),
-          }}>
-          <View
-            style={{
-              backgroundColor: '#fff',
-              borderTopLeftRadius: HP(3),
-              borderTopRightRadius: HP(3),
-              padding: HP(3),
-              minHeight: 700,
-            }}>
-            <Pressable
-              onPress={() => setShowPaidByModal(false)}
-              style={{
-                borderWidth: 1,
-                borderColor: '#FC7916',
-                width: WP(15),
-                alignSelf: 'center',
-                marginBottom: HP(2),
-              }}></Pressable>
-            <CustomText
-              children={'Paid By'}
-              style={{
-                alignSelf: 'center',
-                fontSize: FS(1.7),
-                fontFamily: Fonts.MontserratBold,
-                marginBottom: HP(2),
-              }}
-            />
-            {/* Tab/Slider */}
-            <View style={{flexDirection: 'row'}}>
-              <TouchableOpacity
-                style={{
-                  flex: 1,
-                  alignItems: 'center',
-                  borderBottomWidth: paidByMode === 'single' ? 3 : 1,
-                  borderBottomColor:
-                    paidByMode === 'single' ? '#FF9800' : '#eee',
-                  paddingBottom: 8,
-                }}
-                onPress={() => setPaidByMode('single')}>
-                <CustomText
-                  style={{
-                    // fontWeight: paidByMode === 'single' ? 'bold' : 'normal',
-                    fontFamily:
-                      paidByMode === 'single'
-                        ? Fonts.MontserratBold
-                        : Fonts.MontserratRegular,
-                    color: paidByMode === 'single' ? '#3E3E54' : '#888',
-                  }}>
-                  Single
-                </CustomText>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={{
-                  flex: 1,
-                  alignItems: 'center',
-                  borderBottomWidth: paidByMode === 'multiple' ? 3 : 1,
-
-                  borderBottomColor:
-                    paidByMode === 'multiple' ? '#FF9800' : '#eee',
-                  paddingBottom: 8,
-                }}
-                onPress={() => setPaidByMode('multiple')}>
-                <Text
-                  style={{
-                    fontFamily:
-                      paidByMode === 'multiple'
-                        ? Fonts.MontserratBold
-                        : Fonts.MontserratRegular,
-                    color: paidByMode === 'multiple' ? '#3E3E54' : '#888',
-                  }}>
-                  Multiple
-                </Text>
-              </TouchableOpacity>
+        animationType="fade"
+        onRequestClose={() => setShowPeopleModal(false)}>
+        <View style={styles.peopleModalOverlay}>
+          <Pressable
+            style={{flex: 1}}
+            onPress={() => setShowPeopleModal(false)}
+          />
+          <View style={styles.peopleModalContainer}>
+            <View style={styles.modalHandle} />
+            <CustomText style={styles.peopleModalTitle}>
+              Select Participants
+            </CustomText>
+            <View style={styles.peopleTabRow}>
+              {[
+                {key: 'groups', label: 'Groups'},
+                {key: 'friends', label: 'Friends'},
+              ].map(tab => (
+                <TouchableOpacity
+                  key={tab.key}
+                  style={[
+                    styles.peopleTabButton,
+                    peopleTab === tab.key && styles.peopleTabButtonActive,
+                  ]}
+                  onPress={() => setPeopleTab(tab.key)}>
+                  <CustomText
+                    style={{
+                      color: peopleTab === tab.key ? '#fff' : '#888',
+                      fontFamily:
+                        peopleTab === tab.key
+                          ? Fonts.MontserratBold
+                          : Fonts.MontserratRegular,
+                    }}>
+                    {tab.label}
+                  </CustomText>
+                </TouchableOpacity>
+              ))}
             </View>
-
-            {/* List */}
-            {paidByMode === 'single' ? (
-              <FlatList
-                data={friends}
-                keyExtractor={item => item.id.toString()}
-                renderItem={({item: friend}) => (
-                  <TouchableOpacity
-                    key={friend.id}
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      paddingVertical: 12,
-                    }}
-                    onPress={() => {
-                      setSelectedPayer(friend.id);
-                      setSelectedPayerName(friend.name);
-                      setShowPaidByModal(false);
-                    }}>
-                    {/* Avatar */}
-                    <View
-                      style={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: 18,
-                        backgroundColor: '#B3B3C6',
-                        marginRight: 16,
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                      }}>
-                      <CustomText
-                        style={{
-                          color: '#fff',
-                          //
-                          fontSize: 16,
-                        }}>
-                        {friend.name[0]}
-                      </CustomText>
-                    </View>
-                    {/* Name */}
-                    <Text style={{flex: 1, fontSize: 16, color: '#3E3E54'}}>
-                      {friend.name}
-                    </Text>
-                    {/* Radio */}
-                    <View
-                      style={{
-                        width: 24,
-                        height: 24,
-                        borderRadius: 12,
-                        borderWidth: 2,
-                        borderColor:
-                          selectedPayer === friend.id ? '#FF9800' : '#FF9800',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        backgroundColor:
-                          selectedPayer === friend.id ? '#FF9800' : '#fff',
-                      }}>
-                      {selectedPayer === friend.id && (
-                        <Image
-                          source={Icons.check}
-                          style={{
-                            width: HP(1.6),
-                            height: HP(1.6),
-                            tintColor: '#fff',
-                          }}
-                        />
-                      )}
-                    </View>
-                  </TouchableOpacity>
+            {peopleTab === 'groups' ? (
+              <ScrollView style={{maxHeight: HP(40)}}>
+                {isFetchingPeople ? (
+                  <CustomText style={styles.placeholderText}>
+                    Loading groups...
+                  </CustomText>
+                ) : groupOptions.length === 0 ? (
+                  <CustomText style={styles.placeholderText}>
+                    No groups found
+                  </CustomText>
+                ) : (
+                  groupOptions.map(group => {
+                    const isSelected = selectedGroup?.id === group.id;
+                    return (
+                      <TouchableOpacity
+                        key={group.id}
+                        style={[
+                          styles.peopleRow,
+                          isSelected && styles.peopleRowSelected,
+                        ]}
+                        onPress={() => handleSelectGroup(group)}>
+                        <View>
+                          <CustomText style={styles.peopleRowTitle}>
+                            {group?.name || 'Group'}
+                          </CustomText>
+                          <CustomText style={styles.peopleRowSubtitle}>
+                            {group?.description || 'No description'}
+                          </CustomText>
+                        </View>
+                        {isSelected && (
+                          <Ionicons
+                            name="checkmark"
+                            size={18}
+                            color="#4955E6"
+                          />
+                        )}
+                      </TouchableOpacity>
+                    );
+                  })
                 )}
-              />
+              </ScrollView>
             ) : (
-              <View style={{flex: 1}}>
-                {friends.map(friend => (
-                  <View
-                    key={friend.id}
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      paddingVertical: 12,
-                    }}>
-                    {/* Avatar */}
-                    <View
-                      style={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: 18,
-                        backgroundColor: '#B3B3C6',
-                        marginRight: 16,
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                      }}>
-                      <CustomText
-                        style={{
-                          color: '#fff',
-                          //
-                          fontSize: 16,
-                        }}>
-                        {friend.name[0]}
-                      </CustomText>
-                    </View>
-                    {/* Name */}
-                    <CustomText
-                      style={{flex: 1, fontSize: 16, color: '#3E3E54'}}>
-                      {friend.name}
-                    </CustomText>
-                    {/* Amount Input */}
-                    <CustomText style={{color: '#AAAAAA', marginRight: 4}}>
-                      ₹
-                    </CustomText>
-                    <TextInput
-                      style={{
-                        borderBottomWidth: 1,
-                        borderBottomColor: '#eee',
-                        width: 80,
-                        fontSize: 16,
-                        color: '#3E3E54',
-                        textAlign: 'right',
-                      }}
-                      keyboardType="numeric"
-                      value={
-                        multiplePayers[friend.id]
-                          ? String(multiplePayers[friend.id])
-                          : ''
-                      }
-                      onChangeText={text => {
-                        setMultiplePayers(prev => ({
-                          ...prev,
-                          [friend.id]: text.replace(/[^0-9.]/g, ''),
-                        }));
-                      }}
-                      placeholder="0.00"
-                    />
-                  </View>
-                ))}
-
-                {/* Payment Summary */}
-                <View
-                  style={{
-                    marginTop: 70,
-                    paddingTop: 20,
-                    alignSelf: 'center',
-                  }}>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      marginBottom: 8,
-                    }}>
-                    <CustomText
-                      style={{
-                        fontSize: 16,
-                        color: '#3E3E54',
-                        fontFamily: Fonts.MontserratBold,
-                      }}>
-                      ₹{totalPaidAmount.toFixed(0)} {'  '} of {'   '}₹
-                      {totalExpenseAmount.toFixed(0)}
-                    </CustomText>
-                  </View>
-                  <View
-                    style={{
-                      position: 'absolute',
-                      top: HP(5),
-                      left: HP(2),
-                    }}>
-                    <CustomText
-                      style={{
-                        fontSize: 14,
-                        color: isPaymentComplete ? 'green' : '#EEB600',
-                        fontFamily: Fonts.MontserratBold,
-                        left: HP(2),
-                      }}>
-                      ₹{Math.abs(amountLeft).toFixed(0)}{' '}
-                      {isPaymentComplete
-                        ? '✓'
-                        : amountLeft > 0
-                        ? 'left'
-                        : 'over'}
-                    </CustomText>
-                  </View>
-                </View>
-              </View>
+              <ScrollView style={{maxHeight: HP(40)}}>
+                {isFetchingPeople ? (
+                  <CustomText style={styles.placeholderText}>
+                    Loading friends...
+                  </CustomText>
+                ) : friends.filter(friend => !friend?.isSelf).length === 0 ? (
+                  <CustomText style={styles.placeholderText}>
+                    No friends found
+                  </CustomText>
+                ) : (
+                  friends
+                    .filter(friend => !friend?.isSelf)
+                    .map(friend => {
+                      const friendName = getFriendName(friend);
+                      const friendInitial = getFriendInitial(friend);
+                      const isSelected = selectedPeople.includes(friend.id);
+                      return (
+                        <TouchableOpacity
+                          key={friend.id}
+                          style={[
+                            styles.peopleRow,
+                            isSelected && styles.peopleRowSelected,
+                          ]}
+                          onPress={() => toggleFriendSelection(friend.id)}>
+                          <View style={styles.peopleRowAvatar}>
+                            <CustomText style={styles.peopleRowAvatarText}>
+                              {friendInitial}
+                            </CustomText>
+                          </View>
+                          <View style={{flex: 1}}>
+                            <CustomText style={styles.peopleRowTitle}>
+                              {friendName}
+                            </CustomText>
+                            {friend?.email && (
+                              <CustomText style={styles.peopleRowSubtitle}>
+                                {friend.email}
+                              </CustomText>
+                            )}
+                          </View>
+                          <Ionicons
+                            name={isSelected ? 'checkbox' : 'square-outline'}
+                            size={20}
+                            color={isSelected ? '#4955E6' : '#C4C4C4'}
+                          />
+                        </TouchableOpacity>
+                      );
+                    })
+                )}
+              </ScrollView>
             )}
-
-            {/* Footer Buttons */}
-            <View
-              style={{
-                flexDirection: 'row',
-                position: 'absolute',
-                bottom: 20,
-                left: 24,
-                right: 24,
-              }}>
+            <View style={styles.peopleModalButtonRow}>
               <TouchableOpacity
-                style={{
-                  flex: 1,
-                  backgroundColor: '#ECECEC',
-                  borderRadius: 8,
-                  padding: 14,
-                  alignItems: 'center',
-                  marginRight: 8,
-                }}
-                onPress={() => setShowPaidByModal(false)}>
-                <CustomText style={{color: '#888'}}>Cancel</CustomText>
+                onPress={() => setShowPeopleModal(false)}
+                style={[
+                  styles.peopleModalButton,
+                  styles.peopleModalButtonSecondary,
+                  {marginRight: WP(2)},
+                ]}>
+                <CustomText style={{color: '#4955E6'}}>Cancel</CustomText>
               </TouchableOpacity>
               <TouchableOpacity
-                style={{
-                  flex: 1,
-                  backgroundColor:
-                    paidByMode === 'multiple' && !isPaymentComplete
-                      ? '#CCCCCC'
-                      : '#4955E6',
-                  borderRadius: 8,
-                  padding: 14,
-                  alignItems: 'center',
-                  marginLeft: 8,
-                }}
-                disabled={paidByMode === 'multiple' && !isPaymentComplete}
-                onPress={() => {
-                  if (paidByMode === 'multiple' && !isPaymentComplete) {
-                    return;
-                  }
-                  setShowPaidByModal(false);
-                }}>
-                <CustomText style={{color: '#fff'}}>Confirm</CustomText>
+                disabled={isGroupSubmitting}
+                onPress={handleCreateGroupFromSelection}
+                style={[
+                  styles.peopleModalButton,
+                  {marginLeft: WP(2)},
+                  isGroupSubmitting && {opacity: 0.6},
+                ]}>
+                {isGroupSubmitting ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <CustomText style={{color: '#fff'}}>Submit</CustomText>
+                )}
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
+      <PaidByModal
+        visible={showModal}
+        onClose={handleClosePaidByModal}
+        friends={friends}
+        paidByMode={paidByMode}
+        setPaidByMode={setPaidByMode}
+        selectedPayer={selectedPayer}
+        setSelectedPayer={setSelectedPayer}
+        setSelectedPayerName={setSelectedPayerName}
+        multiplePayers={multiplePayers}
+        setMultiplePayers={setMultiplePayers}
+        totalPaidAmount={totalPaidAmount}
+        totalExpenseAmount={totalExpenseAmount}
+        amountLeft={amountLeft}
+        isPaymentComplete={isPaymentComplete}
+        onConfirm={handleClosePaidByModal}
+        onSelectPayers={handleSelectPayers}
+      />
+
       <Modal
         visible={showSplitByModal}
         transparent
@@ -869,159 +1072,162 @@ export default function AddExpense({navigation}) {
 
               {/* Split By Content */}
               {splitByMode === 'equally' && (
-                <View style={{height: HP(66)}}>
+                <View style={{height: HP(65)}}>
                   <FlatList
                     data={friends}
                     keyExtractor={item => item.id.toString()}
                     showsVerticalScrollIndicator={false}
-                    renderItem={({item: friend}) => (
-                      <TouchableOpacity
-                        key={friend.id}
-                        style={{
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          paddingVertical: 12,
-                        }}
-                        onPress={() => {
-                          setSelectedSplitters(prev =>
-                            prev.includes(friend.id)
-                              ? prev.filter(id => id !== friend.id)
-                              : [...prev, friend.id],
-                          );
-                        }}>
-                        {/* Avatar */}
-                        <View
+                    renderItem={({item: friend}) => {
+                      const friendName = getFriendName(friend);
+                      const friendInitial = getFriendInitial(friend);
+                      const isSelected = selectedSplitters.includes(friend.id);
+                      return (
+                        <TouchableOpacity
+                          key={friend.id}
                           style={{
-                            width: 36,
-                            height: 36,
-                            borderRadius: 18,
-                            backgroundColor: '#B3B3C6',
-                            marginRight: 16,
-                            justifyContent: 'center',
+                            flexDirection: 'row',
                             alignItems: 'center',
+                            paddingVertical: 12,
+                          }}
+                          onPress={() => {
+                            setSelectedSplitters(prev =>
+                              prev.includes(friend.id)
+                                ? prev.filter(id => id !== friend.id)
+                                : [...prev, friend.id],
+                            );
                           }}>
-                          <CustomText
+                          {/* Avatar */}
+                          <View
                             style={{
-                              color: '#fff',
-
-                              fontSize: 16,
+                              width: 36,
+                              height: 36,
+                              borderRadius: 18,
+                              backgroundColor: '#B3B3C6',
+                              marginRight: 16,
+                              justifyContent: 'center',
+                              alignItems: 'center',
                             }}>
-                            {friend.name[0]}
-                          </CustomText>
-                        </View>
-                        {/* Name */}
-                        <CustomText
-                          style={{flex: 1, fontSize: 16, color: '#3E3E54'}}>
-                          {friend.name}
-                        </CustomText>
-
-                        <View
-                          style={{
-                            width: 26,
-                            height: 26,
-                            borderRadius: 8,
-                            borderWidth: 2,
-                            borderColor: '#FF9800',
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            backgroundColor: selectedSplitters.includes(
-                              friend.id,
-                            )
-                              ? '#FF9800'
-                              : '#fff',
-                          }}>
-                          {selectedSplitters.includes(friend.id) && (
-                            <Image
-                              source={Icons.check}
+                            <CustomText
                               style={{
-                                width: HP(1.6),
-                                height: HP(1.6),
-                                tintColor: '#fff',
-                                resizeMode: 'contain',
-                              }}
-                            />
-                          )}
-                        </View>
-                      </TouchableOpacity>
-                    )}
+                                color: '#fff',
+
+                                fontSize: 16,
+                              }}>
+                              {friendInitial}
+                            </CustomText>
+                          </View>
+                          {/* Name */}
+                          <CustomText
+                            style={{flex: 1, fontSize: 16, color: '#3E3E54'}}>
+                            {friendName}
+                          </CustomText>
+
+                          <View
+                            style={{
+                              width: 26,
+                              height: 26,
+                              borderRadius: 8,
+                              borderWidth: 2,
+                              borderColor: '#FF9800',
+                              justifyContent: 'center',
+                              alignItems: 'center',
+                              backgroundColor: isSelected ? '#FF9800' : '#fff',
+                            }}>
+                            {isSelected && (
+                              <Image
+                                source={Icons.check}
+                                style={{
+                                  width: HP(1.6),
+                                  height: HP(1.6),
+                                  tintColor: '#fff',
+                                  resizeMode: 'contain',
+                                }}
+                              />
+                            )}
+                          </View>
+                        </TouchableOpacity>
+                      );
+                    }}
                   />
-                  {/* {splitByMode === 'equally' && (
-                  <CustomText style={{textAlign: 'center', marginTop: 8}}>
-                    {selectedSplitters.length > 0
-                      ? `₹${equallyShares()[selectedSplitters[0]]} per person`
-                      : 'Select at least one person'}
-                  </CustomText>
-                )} */}
                 </View>
               )}
 
               {splitByMode === 'unequally' && (
-                <View style={{height: HP(66)}}>
+                <KeyboardAvoidingView
+                  behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                  keyboardVerticalOffset={HP(15)} // adjust if header present
+                  style={{height: HP(65)}}
+                  enabled>
+                  {/* // <View style={{height: HP(66)}}> */}
                   <FlatList
                     data={friends}
                     keyExtractor={item => item.id.toString()}
                     showsVerticalScrollIndicator={false}
-                    renderItem={({item: friend}) => (
-                      <View
-                        key={friend.id}
-                        style={{
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          paddingVertical: 12,
-                        }}>
-                        {/* Avatar */}
+                    renderItem={({item: friend}) => {
+                      const friendName = getFriendName(friend);
+                      const friendInitial = getFriendInitial(friend);
+                      return (
                         <View
+                          key={friend.id}
                           style={{
-                            width: 36,
-                            height: 36,
-                            borderRadius: 18,
-                            backgroundColor: '#B3B3C6',
-                            marginRight: 16,
-                            justifyContent: 'center',
+                            flexDirection: 'row',
                             alignItems: 'center',
+                            paddingVertical: 12,
                           }}>
-                          <CustomText
+                          {/* Avatar */}
+                          <View
                             style={{
-                              color: '#fff',
-                              fontSize: 16,
+                              width: 36,
+                              height: 36,
+                              borderRadius: 18,
+                              backgroundColor: '#B3B3C6',
+                              marginRight: 16,
+                              justifyContent: 'center',
+                              alignItems: 'center',
                             }}>
-                            {friend.name[0]}
+                            <CustomText
+                              style={{
+                                color: '#fff',
+                                fontSize: 16,
+                              }}>
+                              {friendInitial}
+                            </CustomText>
+                          </View>
+                          {/* Name */}
+                          <CustomText
+                            style={{flex: 1, fontSize: 16, color: '#3E3E54'}}>
+                            {friendName}
                           </CustomText>
+                          {/* Input */}
+                          <CustomText style={{color: '#aaa', marginRight: 4}}>
+                            ₹
+                          </CustomText>
+                          <TextInput
+                            style={{
+                              borderBottomWidth: 1,
+                              borderBottomColor: '#eee',
+                              width: 80,
+                              fontSize: 16,
+                              color: '#3E3E54',
+                              textAlign: 'right',
+                            }}
+                            keyboardType="numeric"
+                            value={
+                              splitValues[friend.id]
+                                ? String(splitValues[friend.id])
+                                : ''
+                            }
+                            onChangeText={text => {
+                              setSplitValues(prev => ({
+                                ...prev,
+                                [friend.id]: text.replace(/[^0-9.]/g, ''),
+                              }));
+                            }}
+                            placeholder="0.00"
+                          />
                         </View>
-                        {/* Name */}
-                        <CustomText
-                          style={{flex: 1, fontSize: 16, color: '#3E3E54'}}>
-                          {friend.name}
-                        </CustomText>
-                        {/* Input */}
-                        <CustomText style={{color: '#aaa', marginRight: 4}}>
-                          ₹
-                        </CustomText>
-                        <TextInput
-                          style={{
-                            borderBottomWidth: 1,
-                            borderBottomColor: '#eee',
-                            width: 80,
-                            fontSize: 16,
-                            color: '#3E3E54',
-                            textAlign: 'right',
-                          }}
-                          keyboardType="numeric"
-                          value={
-                            splitValues[friend.id]
-                              ? String(splitValues[friend.id])
-                              : ''
-                          }
-                          onChangeText={text => {
-                            setSplitValues(prev => ({
-                              ...prev,
-                              [friend.id]: text.replace(/[^0-9.]/g, ''),
-                            }));
-                          }}
-                          placeholder="0.00"
-                        />
-                      </View>
-                    )}></FlatList>
+                      );
+                    }}></FlatList>
 
                   <KeyboardAvoidingView
                     style={{
@@ -1066,268 +1272,303 @@ export default function AddExpense({navigation}) {
                       </CustomText>
                     )}
                   </KeyboardAvoidingView>
-                </View>
+                  {/* </View> */}
+                </KeyboardAvoidingView>
               )}
 
               {splitByMode === 'percentage' && (
-                <View style={{height: HP(66)}}>
+                <KeyboardAvoidingView
+                  behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                  keyboardVerticalOffset={HP(14)} // adjust if header present
+                  style={{height: HP(65)}}
+                  enabled>
                   <FlatList
                     data={friends}
                     keyExtractor={item => item.id.toString()}
                     showsVerticalScrollIndicator={false}
-                    renderItem={({item: friend}) => (
-                      <View
-                        key={friend.id}
-                        style={{
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          paddingVertical: 12,
-                        }}>
-                        {/* Avatar */}
+                    renderItem={({item: friend}) => {
+                      const friendName = getFriendName(friend);
+                      const friendInitial = getFriendInitial(friend);
+                      return (
                         <View
+                          key={friend.id}
                           style={{
-                            width: 36,
-                            height: 36,
-                            borderRadius: 18,
-                            backgroundColor: '#B3B3C6',
-                            marginRight: 16,
-                            justifyContent: 'center',
+                            flexDirection: 'row',
                             alignItems: 'center',
+                            paddingVertical: 12,
                           }}>
-                          <CustomText
+                          {/* Avatar */}
+                          <View
                             style={{
-                              color: '#fff',
-
-                              fontSize: 16,
+                              width: 36,
+                              height: 36,
+                              borderRadius: 18,
+                              backgroundColor: '#B3B3C6',
+                              marginRight: 16,
+                              justifyContent: 'center',
+                              alignItems: 'center',
                             }}>
-                            {friend.name[0]}
-                          </CustomText>
-                        </View>
-                        {/* Name */}
-                        <View style={{flex: 1}}>
+                            <CustomText style={{color: '#fff', fontSize: 16}}>
+                              {friendInitial}
+                            </CustomText>
+                          </View>
+
+                          {/* Name + Inputs */}
+                          <View style={{flex: 1}}>
+                            <CustomText
+                              style={{fontSize: 16, color: '#3E3E54'}}>
+                              {friendName}
+                            </CustomText>
+
+                            <View
+                              style={{
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                marginTop: 6,
+                              }}>
+                              {/* % Input */}
+                              <TextInput
+                                style={{
+                                  borderBottomWidth: 1,
+                                  borderBottomColor: '#eee',
+                                  width: 60,
+                                  fontSize: 14,
+                                  color: '#3E3E54',
+                                  textAlign: 'right',
+                                  paddingVertical: 2,
+                                  marginRight: 4,
+                                }}
+                                keyboardType="numeric"
+                                value={
+                                  percentageValues?.[friend.id]
+                                    ? String(percentageValues[friend.id])
+                                    : ''
+                                }
+                                onChangeText={text => {
+                                  const clean = text.replace(/[^0-9.]/g, '');
+                                  const total = parseFloat(amount) || 0;
+                                  let percentValue = parseFloat(clean) || 0;
+                                  if (percentValue > 100) percentValue = 100;
+                                  if (percentValue < 0) percentValue = 0;
+
+                                  // update %
+                                  setPercentageValues(prev => ({
+                                    ...prev,
+                                    [friend.id]: clean,
+                                  }));
+
+                                  // auto calculate ₹
+                                  const splitResult =
+                                    (total * percentValue) / 100;
+                                  const formatted =
+                                    !isNaN(splitResult) &&
+                                    splitResult !== undefined
+                                      ? splitResult.toFixed(2)
+                                      : '0';
+
+                                  setSplitValues(prev => ({
+                                    ...prev,
+                                    [friend.id]: formatted,
+                                  }));
+                                }}
+                                placeholder="0"
+                              />
+                              <CustomText
+                                style={{fontSize: 12, color: '#AAAAAA'}}>
+                                %
+                              </CustomText>
+                            </View>
+                          </View>
+
+                          {/* ₹ Input */}
                           <CustomText
-                            style={{flex: 1, fontSize: 16, color: '#3E3E54'}}>
-                            {friend.name}
+                            style={{color: '#3E3E54', marginRight: 4}}>
+                            ₹
                           </CustomText>
-                          {/* <CustomText
-                            style={{fontSize: 12, color: '#AAAAAA'}}
-                            children={`[${calculatePercentage(
-                              splitValues[friend.id] || 0,
-                            )}%]`}
-                          /> */}
+                          <TextInput
+                            style={{
+                              borderBottomWidth: 1,
+                              borderBottomColor: '#eee',
+                              width: 80,
+                              fontSize: 16,
+                              color: '#3E3E54',
+                              textAlign: 'right',
+                              fontFamily: Fonts.MontserratRegular,
+                            }}
+                            keyboardType="numeric"
+                            value={
+                              splitValues?.[friend.id]
+                                ? String(splitValues[friend.id])
+                                : ''
+                            }
+                            onChangeText={text => {
+                              const clean = text.replace(/[^0-9.]/g, '');
+                              const amtValue = parseFloat(clean) || 0;
+                              const total = parseFloat(amount) || 0;
+
+                              // update ₹
+                              setSplitValues(prev => ({
+                                ...prev,
+                                [friend.id]: clean,
+                              }));
+
+                              // auto calculate %
+                              const percentResult = total
+                                ? (amtValue / total) * 100
+                                : 0;
+                              const formatted =
+                                !isNaN(percentResult) &&
+                                percentResult !== undefined
+                                  ? percentResult.toFixed(2)
+                                  : '0.00';
+
+                              setPercentageValues(prev => ({
+                                ...prev,
+                                [friend.id]: formatted,
+                              }));
+                            }}
+                            placeholder="0.00"
+                          />
+                        </View>
+                      );
+                    }}
+                  />
+
+                  {/* Bottom Summary */}
+                  <KeyboardAvoidingView style={{backgroundColor: '#fff'}}>
+                    <CustomText
+                      style={{
+                        textAlign: 'center',
+                        marginTop: 8,
+                        color: '#AAAAAA',
+                        fontFamily: Fonts.MontserratBold,
+                      }}>
+                      ₹{unequallyTotal} of ₹{amount}
+                      {unequallyValid
+                        ? '✓'
+                        : unequallyTotal > amount
+                        ? 'over'
+                        : 'left'}
+                    </CustomText>
+                  </KeyboardAvoidingView>
+                </KeyboardAvoidingView>
+              )}
+
+              {splitByMode === 'ratio' && (
+                <KeyboardAvoidingView
+                  behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                  keyboardVerticalOffset={HP(14)} // adjust if header present
+                  style={{height: HP(65)}}
+                  enabled>
+                  <FlatList
+                    data={friends}
+                    keyExtractor={item => item.id.toString()}
+                    showsVerticalScrollIndicator={false}
+                    renderItem={({item: friend}) => {
+                      const friendName = getFriendName(friend);
+                      const friendInitial = getFriendInitial(friend);
+                      return (
+                        <View
+                          key={friend.id}
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            paddingVertical: 12,
+                          }}>
+                          {/* Avatar */}
+                          <View
+                            style={{
+                              width: 36,
+                              height: 36,
+                              borderRadius: 18,
+                              backgroundColor: '#B3B3C6',
+                              marginRight: 16,
+                              justifyContent: 'center',
+                              alignItems: 'center',
+                            }}>
+                            <CustomText
+                              style={{
+                                color: '#fff',
+                                fontSize: 16,
+                              }}>
+                              {friendInitial}
+                            </CustomText>
+                          </View>
+                          {/* Name and Shares */}
+                          <View style={{flex: 1}}>
+                            <CustomText
+                              style={{fontSize: 16, color: '#3E3E54'}}>
+                              {friendName}
+                            </CustomText>
+                            <CustomText
+                              style={{fontSize: 12, color: '#AAAAAA'}}
+                              children={`[${
+                                splitValues[friend.id] || '_'
+                              } share${
+                                parseInt(splitValues[friend.id], 10) === 1
+                                  ? ''
+                                  : 's'
+                              }]`}
+                            />
+                          </View>
+                          {/* Shares Input */}
                           <View
                             style={{
                               flexDirection: 'row',
                               alignItems: 'center',
-                            }}>
-                            <TextInput
-                              style={{
-                                borderBottomWidth: 1,
-                                borderBottomColor: '#eee',
-                                width: 60,
-                                fontSize: 14,
-                                color: '#3E3E54',
-                                textAlign: 'right',
-                                paddingVertical: 2,
-                                marginRight: 4,
-                              }}
-                              keyboardType="numeric"
-                              value={
-                                percentageValues?.[friend.id]
-                                  ? String(percentageValues[friend.id])
-                                  : ''
-                              }
-                              onChangeText={text => {
-                                const clean = text.replace(/[^0-9.]/g, '');
-                                setPercentageValues(prev => ({
-                                  ...prev,
-                                  [friend.id]: clean,
-                                }));
-                              }}
-                              placeholder="0"
-                            />
-                            <CustomText
-                              style={{fontSize: 12, color: '#AAAAAA'}}>
-                              %
-                            </CustomText>
-                          </View>
-                        </View>
-                        {/* Input */}
-                        <CustomText style={{color: '#3E3E54', marginRight: 4}}>
-                          ₹
-                        </CustomText>
-                        <TextInput
-                          style={{
-                            borderBottomWidth: 1,
-                            borderBottomColor: '#eee',
-                            width: 80,
-                            fontSize: 16,
-                            color: '#3E3E54',
-                            textAlign: 'right',
-                          }}
-                          keyboardType="numeric"
-                          value={
-                            splitValues[friend.id]
-                              ? String(splitValues[friend.id])
-                              : ''
-                          }
-                          onChangeText={text => {
-                            setSplitValues(prev => ({
-                              ...prev,
-                              [friend.id]: text.replace(/[^0-9.]/g, ''),
-                            }));
-                          }}
-                          placeholder="0.00"
-                        />
-                      </View>
-                    )}
-                  />
-                  <KeyboardAvoidingView
-                    style={{
-                      backgroundColor: '#fff',
-                    }}>
-                    {splitByMode === 'percentage' && (
-                      <CustomText
-                        style={{
-                          textAlign: 'center',
-                          marginTop: 8,
-                          color: '#AAAAAA',
-                          fontFamily: Fonts.MontserratBold,
-                        }}>
-                        ₹{unequallyTotal} of ₹{amount}
-                        {unequallyValid
-                          ? '✓'
-                          : unequallyTotal > amount
-                          ? 'over'
-                          : 'left'}
-                      </CustomText>
-                    )}
-
-                    {splitByMode === 'percentage' && !unequallyValid && (
-                      <CustomText
-                        style={{
-                          textAlign: 'center',
-                          marginTop: 4,
-                          color:
-                            unequallyTotal > (parseFloat(amount) || 0)
-                              ? 'red'
-                              : '#EEB600',
-                          fontSize: 12,
-                          fontFamily: Fonts.MontserratBold,
-                        }}>
-                        ₹
-                        {Math.abs(
-                          unequallyTotal - (parseFloat(amount) || 0),
-                        ).toFixed(0)}{' '}
-                        {unequallyTotal > (parseFloat(amount) || 0)
-                          ? 'over'
-                          : 'left'}
-                      </CustomText>
-                    )}
-                  </KeyboardAvoidingView>
-                </View>
-              )}
-              {splitByMode === 'ratio' && (
-                <View style={{height: HP(66)}}>
-                  <FlatList
-                    data={friends}
-                    keyExtractor={item => item.id.toString()}
-                    showsVerticalScrollIndicator={false}
-                    renderItem={({item: friend}) => (
-                      <View
-                        key={friend.id}
-                        style={{
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          paddingVertical: 12,
-                        }}>
-                        {/* Avatar */}
-                        <View
-                          style={{
-                            width: 36,
-                            height: 36,
-                            borderRadius: 18,
-                            backgroundColor: '#B3B3C6',
-                            marginRight: 16,
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                          }}>
+                              marginRight: 8,
+                            }}></View>
+                          {/* Calculated Amount */}
                           <CustomText
+                            style={{color: '#3E3E54', marginRight: 4}}>
+                            ₹
+                          </CustomText>
+                          <TextInput
                             style={{
-                              color: '#fff',
-                              fontSize: 16,
-                            }}>
-                            {friend.name[0]}
-                          </CustomText>
-                        </View>
-                        {/* Name and Shares */}
-                        <View style={{flex: 1}}>
-                          <CustomText style={{fontSize: 16, color: '#3E3E54'}}>
-                            {friend.name}
-                          </CustomText>
-                          <CustomText
-                            style={{fontSize: 12, color: '#AAAAAA'}}
-                            children={`[${splitValues[friend.id] || '_'} share${
-                              parseInt(splitValues[friend.id]) === 1 ? '' : 's'
-                            }]`}
+                              borderBottomWidth: 1,
+                              borderBottomColor: '#eee',
+                              width: 60,
+                              fontSize: 14,
+                              color: '#3E3E54',
+                              textAlign: 'right',
+                              paddingVertical: 2,
+                              marginRight: 4,
+                            }}
+                            keyboardType="numeric"
+                            value={
+                              percentageValues?.[friend.id]
+                                ? String(percentageValues[friend.id])
+                                : ''
+                            }
+                            onChangeText={text => {
+                              const clean = text.replace(/[^0-9.]/g, '');
+                              const percent = parseFloat(clean) || 0;
+                              const amt = parseFloat(amount) || 0;
+
+                              // update percentage state
+                              setPercentageValues(prev => ({
+                                ...prev,
+                                [friend.id]: clean,
+                              }));
+
+                              // update rupee (₹) value automatically
+                              const calculatedValue = (
+                                (percent / 100) *
+                                amt
+                              ).toFixed(2);
+                              setSplitValues(prev => ({
+                                ...prev,
+                                [friend.id]: calculatedValue,
+                              }));
+                            }}
+                            placeholder="0"
                           />
+                          <CustomText style={{fontSize: 12, color: '#AAAAAA'}}>
+                            %
+                          </CustomText>
                         </View>
-                        {/* Shares Input */}
-                        <View
-                          style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            marginRight: 8,
-                          }}></View>
-                        {/* Calculated Amount */}
-                        <CustomText style={{color: '#3E3E54', marginRight: 4}}>
-                          ₹
-                        </CustomText>
-                        <TextInput
-                          style={{
-                            borderBottomWidth: 1,
-                            borderBottomColor: '#eee',
-                            width: 60,
-                            fontSize: 14,
-                            color: '#3E3E54',
-                            textAlign: 'right',
-                            paddingVertical: 2,
-                            marginRight: 4,
-                          }}
-                          keyboardType="numeric"
-                          value={
-                            percentageValues?.[friend.id]
-                              ? String(percentageValues[friend.id])
-                              : ''
-                          }
-                          onChangeText={text => {
-                            const clean = text.replace(/[^0-9.]/g, '');
-                            const percent = parseFloat(clean) || 0;
-                            const amt = parseFloat(amount) || 0;
-
-                            // update percentage state
-                            setPercentageValues(prev => ({
-                              ...prev,
-                              [friend.id]: clean,
-                            }));
-
-                            // update rupee (₹) value automatically
-                            const calculatedValue = (
-                              (percent / 100) *
-                              amt
-                            ).toFixed(2);
-                            setSplitValues(prev => ({
-                              ...prev,
-                              [friend.id]: calculatedValue,
-                            }));
-                          }}
-                          placeholder="0"
-                        />
-                        <CustomText style={{fontSize: 12, color: '#AAAAAA'}}>
-                          %
-                        </CustomText>
-                      </View>
-                    )}
+                      );
+                    }}
                   />
 
                   {/* Summary at bottom */}
@@ -1336,8 +1577,11 @@ export default function AddExpense({navigation}) {
                     style={{
                       position: 'absolute',
                       bottom: 0,
-                      left: HP(15),
-                      right: HP(15),
+                      // left: HP(15),
+                      // right: HP(15),
+                      height: HP(7),
+                      backgroundColor: '#fff',
+                      width: WP(100),
                     }}>
                     <CustomText
                       style={{
@@ -1349,7 +1593,6 @@ export default function AddExpense({navigation}) {
                       {totalShares} of {totalShares}
                     </CustomText>
 
-                    {/* Show over/under amount */}
                     {(() => {
                       const totalRatioAmount = Object.values(
                         ratioShares,
@@ -1378,7 +1621,7 @@ export default function AddExpense({navigation}) {
                       return null;
                     })()}
                   </View>
-                </View>
+                </KeyboardAvoidingView>
               )}
               {/* Footer Buttons */}
               <View
@@ -1431,4 +1674,103 @@ export default function AddExpense({navigation}) {
   );
 }
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  peopleModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  peopleModalContainer: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: HP(3),
+    borderTopRightRadius: HP(3),
+    padding: HP(2),
+    minHeight: HP(40),
+  },
+  modalHandle: {
+    width: WP(15),
+    height: HP(0.5),
+    backgroundColor: '#E0E0E0',
+    alignSelf: 'center',
+    borderRadius: HP(0.5),
+    marginBottom: HP(1.5),
+  },
+  peopleModalTitle: {
+    fontSize: FS(2),
+    color: '#3E3E54',
+    fontFamily: Fonts.MontserratBold,
+    textAlign: 'center',
+    marginBottom: HP(1.5),
+  },
+  peopleTabRow: {
+    flexDirection: 'row',
+    backgroundColor: '#F4F4F4',
+    borderRadius: HP(2),
+    padding: HP(0.5),
+    marginBottom: HP(2),
+  },
+  peopleTabButton: {
+    flex: 1,
+    paddingVertical: HP(1),
+    borderRadius: HP(1.5),
+    alignItems: 'center',
+  },
+  peopleTabButtonActive: {
+    backgroundColor: '#4955E6',
+  },
+  placeholderText: {
+    textAlign: 'center',
+    color: '#AAAAAA',
+    paddingVertical: HP(4),
+    fontFamily: Fonts.MontserratMedium,
+  },
+  peopleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: HP(1.5),
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F1F1',
+  },
+  peopleRowSelected: {
+    backgroundColor: '#F7F7FF',
+  },
+  peopleRowTitle: {
+    fontSize: FS(1.6),
+    color: '#3E3E54',
+    fontFamily: Fonts.MontserratMedium,
+  },
+  peopleRowSubtitle: {
+    fontSize: FS(1.2),
+    color: '#A0A0A0',
+  },
+  peopleRowAvatar: {
+    width: HP(4.5),
+    height: HP(4.5),
+    borderRadius: HP(2.25),
+    backgroundColor: '#B3B3C6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: HP(1.5),
+  },
+  peopleRowAvatarText: {
+    color: '#fff',
+    fontSize: FS(1.8),
+    fontFamily: Fonts.MontserratBold,
+  },
+  peopleModalButtonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: HP(2),
+  },
+  peopleModalButton: {
+    flex: 1,
+    backgroundColor: '#4955E6',
+    borderRadius: HP(2),
+    paddingVertical: HP(1.5),
+    alignItems: 'center',
+  },
+  peopleModalButtonSecondary: {
+    backgroundColor: '#ECECEC',
+  },
+});

@@ -1,35 +1,72 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState} from 'react';
 import {
-  Image,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import MainView from '../../components/MainView';
 import Icon from 'react-native-vector-icons/AntDesign';
 import Colors from '../../theme/Color';
 import Input from '../../components/Input';
-import {loginUser} from '../../api/apiService'; // Make sure this path is correct
+import {loginUser} from '../../api/apiService';
 import {FS, HP, WP} from '../../utils/Dimention';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SignIn = ({navigation}) => {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleSignIn = async () => {
-    if (!email || !password) {
-      Alert.alert('Error', 'Please enter both email and password.');
+    if (!email) {
+      Alert.alert('Error', 'Please enter email.');
       return;
     }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      Alert.alert('Error', 'Please enter a valid email address.');
+      return;
+    }
+
+    setLoading(true);
+
     try {
-      const [user] = await loginUser(email, password);
-      console.log('Login successful:', user);
-      navigation.navigate('BottomTab', {user});
+      const response = await loginUser(email);
+      console.log('Login response:', response);
+
+      // Check if response is successful
+      if (response?.success) {
+        // Store token if available
+        if (response.token) {
+          await AsyncStorage.setItem('token', response.token);
+        }
+
+        // Store user data if available
+        if (response.user) {
+          await AsyncStorage.setItem('userData', JSON.stringify(response.user));
+          // console.log('response.data-=-=-=', response.user);
+        }
+
+        console.log('Login successful');
+        navigation.navigate('BottomTab', {user: response.data});
+      } else {
+        Alert.alert(
+          'Login Failed',
+          response?.message || 'Something went wrong. Please try again.',
+        );
+      }
     } catch (error) {
-      console.error('Login failed:', error.message);
-      Alert.alert('Login Failed', error.message);
+      console.error('Login failed:', error);
+      Alert.alert(
+        'Login Failed',
+        error.message || 'Unable to connect to server. Please try again.',
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -53,19 +90,12 @@ const SignIn = ({navigation}) => {
 
         <View>
           <Input
-            Place="Email or Phone"
+            Place="Email"
             icon="user"
             value={email}
             onChangeText={setEmail}
-          />
-          <Input
-            iconType="SimpleLineIcons"
-            Place="Password"
-            icon="lock"
-            eye={true}
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry={true}
+            keyboardType="email-address"
+            autoCapitalize="none"
           />
 
           <TouchableOpacity onPress={() => navigation.navigate('ForgotPass')}>
@@ -81,8 +111,15 @@ const SignIn = ({navigation}) => {
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={styles.signInButton} onPress={handleSignIn}>
-          <Text style={{color: Colors.white}}>Sign In</Text>
+        <TouchableOpacity
+          style={[styles.signInButton, loading && styles.disabledButton]}
+          onPress={handleSignIn}
+          disabled={loading}>
+          {loading ? (
+            <ActivityIndicator color={Colors.white} />
+          ) : (
+            <Text style={styles.signInText}>Sign In</Text>
+          )}
         </TouchableOpacity>
       </View>
     </MainView>
@@ -98,6 +135,9 @@ const styles = StyleSheet.create({
     marginVertical: HP(2),
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  disabledButton: {
+    opacity: 0.6,
   },
   signInText: {
     fontSize: FS(2.5),

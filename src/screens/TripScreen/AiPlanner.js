@@ -129,13 +129,13 @@ export default function AiPlanner({navigation}) {
               key={item}
               style={[
                 styles.optionButton,
-                tripType === item && styles.selectedButton,
+                pickExtras.includes(item) && styles.selectedButton,
                 {marginBottom: HP(1)},
               ]}
-              onPress={() => setTripType(item)}>
+              onPress={() => toggleExtra(item)}>
               <CustomText
                 style={
-                  tripType === item
+                  pickExtras.includes(item)
                     ? styles.selectedButtonText
                     : styles.optionButtonText
                 }>
@@ -202,6 +202,7 @@ const styles = {
     backgroundColor: '#F4F4F4',
     fontSize: FS(1.4),
     height: HP(5.5),
+    fontFamily: Fonts.MontserratRegular,
   },
   peopleRow: {
     flexDirection: 'row',

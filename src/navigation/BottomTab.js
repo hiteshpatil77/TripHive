@@ -12,11 +12,12 @@ import ShowSplit from '../screens/Expenses/ShowSplit';
 import SignleExpense from '../screens/Expenses/SignleExpense';
 import TripDetails from '../screens/Expenses/TripDetails';
 import TripScreen from '../screens/BottomScreen/TripScreen';
-import AddFreind from '../screens/Expenses/AddFreind';
+import AddFreind from '../screens/Expenses/AddFriends';
 import {Image, Text, View} from 'react-native';
 import Icons from '../theme/Icons';
 import Friends from '../screens/Expenses/Friends';
-import CreatTrip from '../screens/TripScreen/CreatTrip';
+import AddFriends from '../screens/Expenses/AddFriends';
+import CreateGroup from '../screens/Expenses/CreateGroup';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -33,7 +34,7 @@ const Explore = () => {
         animationDuration: 200,
       }}>
       <Stack.Screen name="ExploreScreen" component={ExploreScreen} />
-      <Stack.Screen name="Flight" component={FlightScreen} />
+      {/* <Stack.Screen name="Flight" component={FlightScreen} /> */}
     </Stack.Navigator>
   );
 };
@@ -65,13 +66,20 @@ const Expenses = () => {
         animationDuration: 200,
       }}>
       <Stack.Screen name="ExploreScreen" component={ExpensesScreen} />
-      {/* <Stack.Screen name="AddExpense" component={AddExpense} /> */}
       <Stack.Screen name="ShowSplit" component={ShowSplit} />
       <Stack.Screen name="SignleExpense" component={SignleExpense} />
       <Stack.Screen name="TripDetails" component={TripDetails} />
       <Stack.Screen
-        name="AddFreind"
-        component={AddFreind}
+        name="AddFriends"
+        component={AddFriends}
+        options={{
+          gestureEnabled: true,
+          gestureDirection: 'horizontal',
+        }}
+      />
+      <Stack.Screen
+        name="CreateGroup"
+        component={CreateGroup}
         options={{
           gestureEnabled: true,
           gestureDirection: 'horizontal',
@@ -91,19 +99,31 @@ export default function BottomTab() {
         tabBarStyle: {
           borderRadius: HP(3),
           margin: HP(5),
-          height: HP(7),
+          height: HP(8),
           position: 'absolute',
           marginBottom: HP(3),
-          bottom: HP(-1.5),
+          bottom: HP(-1),
           backgroundColor: '#fff',
           width: WP(80),
-          filter: [
-            {dropShadow: ['#000000', 0, -6, 17.87]},
-            {dropShadow: ['#000000', 0, 51, 80]},
-          ],
+          // ✅ No shadow at all
+          elevation: 0, // Android
+          shadowOpacity: 0, // iOS
+          shadowOffset: {width: 0, height: 0},
+          shadowRadius: 0,
         },
         tabBarBackground: () => (
-          <View style={{flex: 1, backgroundColor: 'white'}} />
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: '#fff',
+              borderRadius: HP(3),
+              // elevation: 3, // Android
+              shadowOpacity: 2, // iOS
+              shadowOffset: {width: 0, height: 0},
+              shadowRadius: 0,
+              // opacity: 100,
+            }}
+          />
         ),
         headerShown: false,
         tabBarHideOnKeyboard: true,

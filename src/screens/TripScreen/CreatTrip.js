@@ -89,7 +89,11 @@ export default function CreatTrip({navigation}) {
             <TextInput
               placeholder="Give your trip a name"
               placeholderTextColor={'#737373'}
-              style={{fontSize: FS(1.5), color: '#333'}}
+              style={{
+                fontSize: FS(1.5),
+                color: '#333',
+                fontFamily: Fonts.MontserratRegular,
+              }}
             />
           </View>
         </View>

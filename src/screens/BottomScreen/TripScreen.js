@@ -416,7 +416,8 @@ export default function TripScreen({navigation}) {
     </TouchableOpacity>
   );
   return (
-    <View style={{backgroundColor: '#fff'}}>
+    <View style={{backgroundColor: '#f2f2f2ff'}}>
+      <StatusBar backgroundColor={'#f2f2f2ff'} />
       <ScrollView style={{}}>
         <StatusBar barStyle={'dark-content'} backgroundColor={'white'} />
         <View>

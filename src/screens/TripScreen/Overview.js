@@ -1483,11 +1483,6 @@ const Overview = ({navigation}) => {
   );
 };
 
-/**
- * ──────────────────────────────────────────────────────────────────────────
- * STYLES
- * ──────────────────────────────────────────────────────────────────────────
- */
 const styles = StyleSheet.create({
   screen: {flex: 1, backgroundColor: Colors.white},
 
@@ -1641,6 +1636,7 @@ const styles = StyleSheet.create({
     padding: 12,
     fontSize: FS(1.8),
     color: '#3E3E54',
+    fontFamily: Fonts.MontserratBold,
   },
   activityTimeRow: {
     flexDirection: 'row',

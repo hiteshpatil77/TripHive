@@ -44,11 +44,15 @@ const Icons = {
   Mine: require('../assets/Icon/Subtract.png'),
   add: require('../assets/Icon/addtile.png'),
   check: require('../assets/Icon/check.png'),
-  check: require('../assets/Icon/check.png'),
+  island: require('../assets/Icon/island.png'),
+  city: require('../assets/Icon/city.png'),
+  UpDown: require('../assets/Icon/up-down.png'),
+  emirates: require('../assets/Icon/emirates.png'),
   plane: require('../assets/Images/91.png'),
   trn: require('../assets/Images/92.png'),
   BS: require('../assets/Images/93.png'),
   stys: require('../assets/Images/95.png'),
   homePlane: require('../assets/Images/homeplane.png'),
+  profile: require('../assets/Images/profile.png'),
 };
 export default Icons;

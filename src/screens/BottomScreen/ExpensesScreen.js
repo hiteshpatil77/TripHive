@@ -22,10 +22,13 @@ import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import Fonts from '../../theme/Fonts';
 import {
   friends,
-  friendsExpenses,
+  getactivity,
+  getAllFriend,
+  getAllGroup,
+  getFriend,
   myFreind,
-  MyFreind,
 } from '../../api/apiService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function ExpensesScreen({navigation}) {
   const [activeTab, setActiveTab] = useState('Friends');
@@ -34,6 +37,9 @@ export default function ExpensesScreen({navigation}) {
   const [friendsData, setFriendsData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [getActivityData, setActivityData] = useState(null);
+  const [groups, setGroupsData] = useState([]);
+  console.log('group=-=-=-=', groups);
 
   const filterOptions = [
     'Everyone',
@@ -43,38 +49,47 @@ export default function ExpensesScreen({navigation}) {
   ];
 
   useEffect(() => {
-    const fetchFriends = async () => {
+    const fetchData = async () => {
       try {
-        const data = await myFreind({id: '1'});
-        const Freinds = data[0]?.friends;
-        console.log('freinds-=-', Freinds);
+        setLoading(true);
+        setError(null);
 
-        setFriendsData(Freinds);
+        const token = await AsyncStorage.getItem('token');
+
+        let response;
+
+        switch (activeTab) {
+          case 'Friends':
+            response = await getAllFriend(token);
+            console.log('Friends data =>', response);
+            setFriendsData(response?.friends || []);
+            break;
+
+          case 'Groups':
+            response = await getAllGroup(token);
+            console.log('Groups data =>', response.data);
+            setGroupsData(response?.data || []);
+            break;
+
+          case 'Activity':
+            response = await getactivity(token);
+            console.log('Activity data =>', response);
+            setActivityData(response?.activity || []);
+            break;
+
+          default:
+            console.warn('Unknown tab:', activeTab);
+        }
       } catch (err) {
-        console.log('error-=>', err);
-
-        setError(err.message || 'Failed to fetch friends');
+        console.error('Error fetching data =>', err);
+        setError(err.message || 'Failed to fetch data');
       } finally {
         setLoading(false);
       }
     };
-    fetchFriends();
-  }, []);
 
-  const groups = [
-    {
-      logo: 'home-filled',
-      name: 'ABC Randon Group',
-      RS: 'you owe ₹999.00',
-      Tag: 'you owes Varun 999',
-    },
-    {
-      logo: 'flight-takeoff',
-      name: 'Test Group',
-      RS: 'you are owed 59.00',
-      Tag: 'you owes Varun 59',
-    },
-  ];
+    fetchData();
+  }, [activeTab]);
 
   const activity = [
     {
@@ -94,6 +109,14 @@ export default function ExpensesScreen({navigation}) {
       Date: '20/08/2024 - 20:40',
     },
   ];
+
+  const handelNavigate = () => {
+    if (activeTab === 'Friends') {
+      navigation.navigate('AddFriends');
+    } else if (activeTab === 'Groups') {
+      navigation.navigate('CreateGroup');
+    }
+  };
 
   const renderContent = () => {
     switch (activeTab) {
@@ -171,6 +194,7 @@ export default function ExpensesScreen({navigation}) {
   const renderGroups = () =>
     groups.map((item, index) => (
       <TouchableOpacity
+        key={item.id || index}
         onPress={() => navigation.navigate('TripDetails', {item})}
         style={{
           flexDirection: 'row',
@@ -190,16 +214,21 @@ export default function ExpensesScreen({navigation}) {
         </View>
         <View>
           <CustomText style={{fontSize: FS(1.8)}} children={item.name} />
-          <CustomText
-            style={{
-              fontSize: FS(1.4),
-              color: item.RS.includes('you owe') ? 'red' : 'green',
-            }}
-            children={item.RS}
-          />
+          {item?._count?.expenses !== undefined && (
+            <CustomText
+              style={{
+                fontSize: FS(1.4),
+                color: item._count.expenses > 0 ? 'green' : 'red',
+              }}>
+              {item._count.expenses > 0
+                ? `Total expenses: ${item._count.expenses}`
+                : 'No expenses yet'}
+            </CustomText>
+          )}
+
           <CustomText
             style={{fontSize: FS(1.4), color: '#ADADAD'}}
-            children={item.Tag}
+            children={item.description}
           />
         </View>
       </TouchableOpacity>
@@ -246,13 +275,13 @@ export default function ExpensesScreen({navigation}) {
               {item.Trip}
             </CustomText>
           </View>
-          <CustomText
+          {/* <CustomText
             style={{
               fontSize: FS(1.3),
               color: item.RS.includes('you owe') ? 'red' : 'green',
             }}
             children={item.RS}
-          />
+          /> */}
           <CustomText
             style={{fontSize: FS(1.3), color: '#ADADAD'}}
             children={item.Date}
@@ -262,7 +291,8 @@ export default function ExpensesScreen({navigation}) {
     ));
 
   return (
-    <View style={{flex: 1, backgroundColor: '#fff'}}>
+    <View style={{flex: 1, backgroundColor: '#f2f2f2ff'}}>
+      <StatusBar backgroundColor={'#f2f2f2ff'} />
       <ScrollView showsVerticalScrollIndicator={false}>
         <LinearGradient colors={['#FF754D', '#FF8A5A', '#FFA515']}>
           <View
@@ -303,6 +333,7 @@ export default function ExpensesScreen({navigation}) {
                 }}
                 source={Icons.Travel}
               />
+              1
             </View>
           </View>
         </LinearGradient>
@@ -373,15 +404,16 @@ export default function ExpensesScreen({navigation}) {
           </View>
           <View
             style={{
-              backgroundColor: 'white',
+              backgroundColor: '#f7f7f7ff',
               borderRadius: HP(3),
+              height: HP(100),
             }}>
             <View
               style={{
                 borderRadius: HP(2),
                 width: WP(93),
                 alignSelf: 'center',
-                padding: HP(2),
+                // padding: HP(2),
               }}>
               <View
                 style={{
@@ -408,6 +440,7 @@ export default function ExpensesScreen({navigation}) {
                     <TextInput
                       placeholder="Search Activity"
                       placeholderTextColor="#868686"
+                      style={{fontFamily: Fonts.MontserratRegular}}
                     />
                   </View>
                 ) : (
@@ -434,28 +467,6 @@ export default function ExpensesScreen({navigation}) {
                         />
                       </TouchableOpacity>
                     </View>
-                    {/* <View
-                      style={{
-                        flexDirection: 'row',
-                        width: WP(20),
-                      }}>
-                      <CustomText
-                        style={{
-                          color: '#9E9E9E',
-                          // fontFamily: Fonts.MontserratThin,
-                          fontSize: FS(1.5),
-                        }}
-                        children={'Filters'}
-                      />
-                      <TouchableOpacity style={{}}>
-                        <Ionicons
-                          style={{position: 'absolute', left: WP(2)}}
-                          name="chevron-down"
-                          size={20}
-                          color="orange"
-                        />
-                      </TouchableOpacity>
-                    </View> */}
                   </View>
                 )}
               </View>
@@ -483,7 +494,7 @@ export default function ExpensesScreen({navigation}) {
               {renderContent()}
               {activeTab === 'Activity' ? null : (
                 <TouchableOpacity
-                  onPress={() => navigation.navigate('AddFreind')}
+                  onPress={handelNavigate}
                   style={{
                     alignSelf: 'center',
                     marginVertical: HP(3),
@@ -505,7 +516,11 @@ export default function ExpensesScreen({navigation}) {
                       style={{marginRight: HP(1)}}
                     />
                     <CustomText
-                      children={'Add a new Friends'}
+                      children={
+                        activeTab === 'Friends'
+                          ? 'Add a new friend'
+                          : 'Start a new group'
+                      }
                       style={{fontSize: FS(1.3), color: '#A6A6A6'}}
                     />
                   </View>

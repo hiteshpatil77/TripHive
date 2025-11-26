@@ -19,6 +19,10 @@ import InviteFriend from '../screens/TripScreen/InviteFriend';
 import Overview from '../screens/TripScreen/Overview';
 import BachelorsTrip from '../screens/TripScreen/BacheresTrip';
 import AddExpense from '../screens/Expenses/AddExpense';
+import Tickets from '../screens/Explore/Tickets';
+import FlightBookingScreen from '../screens/Explore/FlightScreen';
+import Stays from '../screens/Explore/Stays';
+import BookTrip from '../screens/Explore/BookTrip';
 
 const Stack = createNativeStackNavigator();
 export default function Route() {
@@ -44,6 +48,10 @@ export default function Route() {
         <Stack.Screen name="BachelorsTrip" component={BachelorsTrip} />
         <Stack.Screen name="Overview" component={Overview} />
         <Stack.Screen name="AddExpense" component={AddExpense} />
+        <Stack.Screen name="Tickets" component={Tickets} />
+        <Stack.Screen name="Flight" component={FlightBookingScreen} />
+        <Stack.Screen name="Stays" component={Stays} />
+        <Stack.Screen name="BookTrip" component={BookTrip} />
       </Stack.Navigator>
     </NavigationContainer>
   );

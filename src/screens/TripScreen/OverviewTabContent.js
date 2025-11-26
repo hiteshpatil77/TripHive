@@ -12,6 +12,7 @@ import {
 import DateTimePicker from '@react-native-community/datetimepicker';
 import CustomText from '../../components/CustomText';
 import Icon from 'react-native-vector-icons/FontAwesome6';
+import StyleSheet from 'styled-components/dist/sheet';
 
 const OverviewTabContent = ({
   styles,
@@ -114,8 +115,7 @@ const OverviewTabContent = ({
               alignItems: 'center',
               borderBottomWidth: 1,
               borderBottomColor: '#eee',
-              backgroundColor:
-                activityTypeColors[activityType] || '#A5F3FC',
+              backgroundColor: activityTypeColors[activityType] || '#A5F3FC',
               paddingTop: HP(3),
             }}>
             <View style={styles.dropdownContainer}>
@@ -157,9 +157,7 @@ const OverviewTabContent = ({
                         styles.dropdownOption,
                         {
                           backgroundColor:
-                            activityType === opt.label
-                              ? opt.color
-                              : '#fff',
+                            activityType === opt.label ? opt.color : '#fff',
                         },
                       ]}
                       onPress={() => {
@@ -221,8 +219,7 @@ const OverviewTabContent = ({
               {showTimePicker && (
                 <DateTimePicker
                   value={
-                    activityStartTime &&
-                    typeof activityStartTime === 'object'
+                    activityStartTime && typeof activityStartTime === 'object'
                       ? activityStartTime
                       : new Date()
                   }
@@ -239,13 +236,9 @@ const OverviewTabContent = ({
               )}
             </View>
 
-            <View
-              style={[styles.activityInputGroup, {alignSelf: 'center'}]}>
+            <View style={[styles.activityInputGroup, {alignSelf: 'center'}]}>
               <Text
-                style={[
-                  styles.activityInputLabel,
-                  {left: HP(7), top: HP(1)},
-                ]}>
+                style={[styles.activityInputLabel, {left: HP(7), top: HP(1)}]}>
                 Duration
               </Text>
               <View style={{flexDirection: 'row', alignItems: 'center'}}>
@@ -271,10 +264,7 @@ const OverviewTabContent = ({
                         .padStart(2, '0')}`,
                     );
                   }}>
-                  <Image
-                    source={Icons.Mine}
-                    style={{resizeMode: 'center'}}
-                  />
+                  <Image source={Icons.Mine} style={{resizeMode: 'center'}} />
                 </TouchableOpacity>
                 <Text style={styles.activityDurationText}>
                   {(() => {
@@ -311,10 +301,7 @@ const OverviewTabContent = ({
                         .padStart(2, '0')}`,
                     );
                   }}>
-                  <Image
-                    source={Icons.Plus}
-                    style={{resizeMode: 'center'}}
-                  />
+                  <Image source={Icons.Plus} style={{resizeMode: 'center'}} />
                 </TouchableOpacity>
               </View>
             </View>
@@ -348,9 +335,7 @@ const OverviewTabContent = ({
             </View>
 
             <View style={styles.activityInputGroup}>
-              <Text style={styles.activityInputLabel}>
-                Point of Contact
-              </Text>
+              <Text style={styles.activityInputLabel}>Point of Contact</Text>
               <TextInput
                 placeholder=""
                 value={activityContact}
@@ -363,9 +348,7 @@ const OverviewTabContent = ({
             <View style={styles.activityInputGroup}>
               <Text style={styles.activityInputLabel}>Location</Text>
               <TouchableOpacity style={styles.activityInput}>
-                <Text style={styles.activityTimeText}>
-                  {activityLocation}
-                </Text>
+                <Text style={styles.activityTimeText}>{activityLocation}</Text>
               </TouchableOpacity>
             </View>
 
@@ -384,14 +367,24 @@ const OverviewTabContent = ({
           <TouchableOpacity
             style={styles.activitySaveButton}
             onPress={handleSaveActivity}>
-            <Text style={styles.activitySaveButtonText}>
-              Save a Action
-            </Text>
+            <Text style={styles.activitySaveButtonText}>Save a Action</Text>
           </TouchableOpacity>
         </View>
       </View>
     </Modal>
   </View>
 );
+
+const styles = StyleSheet.create({
+  activityInput: {
+    borderWidth: 1,
+    borderColor: '#AAAAAA',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: FS(1.8),
+    color: '#3E3E54',
+    fontFamily: Fonts.MontserratBold,
+  },
+});
 
 export default OverviewTabContent;

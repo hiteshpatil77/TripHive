@@ -18,9 +18,16 @@ import LinearGradient from 'react-native-linear-gradient';
 import Fonts from '../../theme/Fonts';
 
 export default function TripDetails({navigation, route}) {
-  console.log('data-=', Data);
+  const group = route?.params?.item || {};
+  console.log('TripDetails group =>', group);
 
-  const Data = route.params.item;
+  // Derived / safe fields from API object
+  const groupName = group?.name || 'Group';
+  const groupDescription = group?.description || 'No description';
+  const expensesCount = group?._count?.expenses ?? 0;
+  const creatorName = group?.creator?.name || 'Unknown';
+  const membersCount = Array.isArray(group?.members) ? group.members.length : 0;
+  const createdAt = group?.createdAt;
 
   const activity = [
     {
@@ -86,7 +93,18 @@ export default function TripDetails({navigation, route}) {
               width: HP(9),
               borderRadius: HP(5),
               backgroundColor: Colors.gray,
-            }}></View>
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}>
+            <CustomText
+              style={{
+                fontSize: FS(2.5),
+                color: '#fff',
+                fontFamily: Fonts.MontserratBold,
+              }}>
+              {groupName?.[0] || 'G'}
+            </CustomText>
+          </View>
           <View
             style={{
               justifyContent: 'center',
@@ -99,17 +117,21 @@ export default function TripDetails({navigation, route}) {
                 color: '#3E3E54',
                 fontFamily: Fonts.MontserratBold,
               }}
-              children={Data?.name}
+              children={groupName}
             />
             <View style={{flexDirection: 'row'}}>
               <CustomText
                 style={{
                   fontSize: FS(1.8),
                   marginVertical: HP(0.5),
-                  color: Data.RS.includes('you owe') ? '#D70000' : '#00BF4C',
+                  color: expensesCount > 0 ? '#00BF4C' : '#ADADAD',
                   marginRight: HP(1),
                 }}
-                children={Data.RS}
+                children={
+                  expensesCount > 0
+                    ? `Total expenses: ${expensesCount}`
+                    : 'No expenses yet'
+                }
               />
             </View>
           </View>
@@ -192,7 +214,12 @@ export default function TripDetails({navigation, route}) {
           bottom: HP(7),
         }}>
         <View style={{width: WP(87), alignSelf: 'center', marginTop: HP(3)}}>
-          <CustomText style={{color: '#ADADAD'}} children={'Aug 2024'} />
+          <CustomText
+            style={{color: '#ADADAD'}}
+            children={`Created by ${creatorName}${
+              membersCount ? ` • ${membersCount} members` : ''
+            }`}
+          />
           {activity.map(item => (
             <TouchableOpacity
               onPress={() => navigation.navigate('ShowSplit')}

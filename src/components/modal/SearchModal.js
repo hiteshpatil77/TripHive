@@ -11,6 +11,7 @@ import {HP, WP} from '../../utils/Dimention';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Fontisto from 'react-native-vector-icons/Fontisto';
 import CustomText from '../CustomText';
+import Fonts from '../../theme/Fonts';
 
 export default function SearchModal({modalVisible, closeModal}) {
   const suggestions = [
@@ -100,7 +101,7 @@ const styles = StyleSheet.create({
   searchInput: {
     marginRight: HP(2),
     padding: HP(1.5),
-    color: '#000',
+    color: '#000',fontFamily:Fonts.MontserratRegular
   },
   suggestionText: {
     fontWeight: 'bold',

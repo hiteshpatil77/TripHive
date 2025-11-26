@@ -1,13 +1,13 @@
 import React, {useState, useCallback, useMemo, useEffect} from 'react';
 import {
   View,
-  Text,
   TextInput,
   TouchableOpacity,
   ScrollView,
   Image,
   SafeAreaView,
   BackHandler,
+  ActivityIndicator,
 } from 'react-native';
 import {FS, HP, WP} from '../../utils/Dimention';
 import Icons from '../../theme/Icons';
@@ -15,16 +15,35 @@ import CustomText from '../../components/CustomText';
 import LinearGradient from 'react-native-linear-gradient';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Entypo from 'react-native-vector-icons/Entypo';
-import AntDesign from 'react-native-vector-icons/AntDesign';
 import Fonts from '../../theme/Fonts';
-import {friendEveryone, myFreind} from '../../api/apiService';
+import {
+  acceptFriend,
+  friendEveryone,
+  getAllFriend,
+  getAllUser,
+  getPendingRequest,
+  rejectFriend,
+  sendFriend,
+} from '../../api/apiService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const AddFreind = ({navigation}) => {
+const AddFriends = ({navigation}) => {
   const [activeTab, setActiveTab] = useState('Friends');
   const [friendsData, setFriendsData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  console.log('friendsData-=-=->', friendsData);
+  const [discoverUsers, setDiscoverUsers] = useState([]);
+  const [RequestUsers, setRequestUsers] = useState([]);
+  const [FriendUsers, setFriendUsers] = useState([]);
+  const [loadingDiscover, setLoadingDiscover] = useState(true);
+  const [loadingFriend, setLoadingFriend] = useState(true);
+  const [loadingRequest, setLoadingRequest] = useState(true);
+  const [errorDiscover, setErrorDiscover] = useState(null);
+  const [errorFriend, setErrorFriend] = useState(null);
+  const [errorRequest, setErrorRequest] = useState(null);
+  console.log('discoverUsers-=', discoverUsers);
+  console.log('RequestUsers-=', RequestUsers);
+  console.log('FriendUsers-=', FriendUsers);
 
   useEffect(() => {
     const backHandler = BackHandler.addEventListener(
@@ -34,29 +53,53 @@ const AddFreind = ({navigation}) => {
         return true;
       },
     );
-
-    return () => {
-      backHandler.remove();
-    };
+    return () => backHandler.remove();
   }, [navigation]);
+  useEffect(() => {
+    fetchFriend();
+  }, []);
+
+  const handleConnect = async friendId => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+
+      const response = await sendFriend(friendId, token);
+
+      console.log('Friend Request Sent:', response);
+
+      fetchDiscover();
+    } catch (error) {
+      console.log('Error sending request:', error);
+    }
+  };
+  const handleAccept = async requestId => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+
+      const response = await acceptFriend(requestId, token);
+
+      console.log('Friend Request Accept:', response);
+
+      fetchRequests();
+    } catch (error) {
+      console.log('Error sending request:', error);
+    }
+  };
+  const handleIgnore = async requestId => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+
+      const response = await rejectFriend(requestId, token);
+
+      console.log('Friend Request Accept:', response);
+
+      fetchRequests();
+    } catch (error) {
+      console.log('Error sending request:', error);
+    }
+  };
 
   const tabs = useMemo(() => ['Friends', 'Requests', 'Discover'], []);
-
-  const requests = useMemo(
-    () => [
-      {name: 'Virat K.', location: 'Maharashtra'},
-      {name: 'Varun B.', location: 'Maharashtra'},
-    ],
-    [],
-  );
-
-  const discover = useMemo(
-    () => [
-      {name: 'Varun B.', location: 'Maharashtra', mutuals: 10},
-      {name: 'Rohit S.', location: 'Maharashtra', mutuals: 10},
-    ],
-    [],
-  );
 
   const handleGoBack = useCallback(() => {
     if (navigation.canGoBack()) {
@@ -68,40 +111,119 @@ const AddFreind = ({navigation}) => {
 
   const handleTabPress = useCallback(tab => {
     setActiveTab(tab);
+    if (tab === 'Discover') {
+      fetchDiscover();
+    } else if (tab === 'Requests') {
+      fetchRequests();
+    } else if (tab === 'Friends') {
+      fetchFriend();
+    }
   }, []);
 
-  useEffect(() => {
-    const fetchFriends = async () => {
-      try {
-        const data = await friendEveryone();
-        const Freinds = data[0]?.friends;
-        console.log('freinds-=-', Freinds);
+  // ✅ Fetch Friends Data
+  const fetchDiscover = async () => {
+    try {
+      setLoadingDiscover(true);
 
-        setFriendsData(Freinds);
-      } catch (err) {
-        console.log('error-=>', err);
+      const token = await AsyncStorage.getItem('token');
+      const data = await getAllUser(token);
 
-        setError(err.message || 'Failed to fetch friends');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchFriends();
-  }, []);
+      console.log('Discover users:', data?.data);
 
+      const users = data?.data;
+
+      setDiscoverUsers(users);
+    } catch (err) {
+      console.log('error fetching discover users:', err);
+      setErrorDiscover(err.message || 'Failed to fetch discover users');
+    } finally {
+      setLoadingDiscover(false);
+    }
+  };
+
+  const fetchRequests = async () => {
+    try {
+      setLoadingRequest(true);
+
+      const token = await AsyncStorage.getItem('token');
+      const data = await getPendingRequest(token);
+
+      console.log('Requests users:', data?.data);
+
+      const users = data?.data;
+
+      setRequestUsers(users);
+    } catch (err) {
+      console.log('error fetching discover users:', err);
+      setErrorRequest(err.message || 'Failed to fetch discover users');
+    } finally {
+      setLoadingRequest(false);
+    }
+  };
+  const fetchFriend = async () => {
+    try {
+      setLoadingFriend(true);
+
+      const token = await AsyncStorage.getItem('token');
+      const data = await getAllFriend(token);
+
+      console.log('Friend users:', data?.data);
+
+      const users = data?.data;
+
+      setFriendUsers(users);
+    } catch (err) {
+      console.log('error fetching discover users:', err);
+      setErrorFriend(err.message || 'Failed to fetch discover users');
+    } finally {
+      setLoadingFriend(false);
+    }
+  };
+  // ✅ Friends Tab Content
   const renderFriends = () => {
-    return friendsData.map((item, index) => (
-      <View key={index} style={{width: WP(87), alignSelf: 'center'}}>
-        <View
+    if (loadingFriend) {
+      return (
+        <ActivityIndicator
+          size="large"
+          color="#4000FF"
+          style={{marginTop: HP(3)}}
+        />
+      );
+    }
+
+    if (errorFriend) {
+      return (
+        <CustomText
           style={{
-            justifyContent: 'center',
-            padding: 10,
+            color: 'red',
+            textAlign: 'center',
+            marginTop: HP(3),
+            fontSize: FS(1.8),
           }}>
+          {errorDiscover}
+        </CustomText>
+      );
+    }
+
+    if (!Array.isArray(FriendUsers) || FriendUsers.length === 0) {
+      return (
+        <CustomText
+          style={{
+            color: 'gray',
+            textAlign: 'center',
+            marginTop: HP(3),
+            fontSize: FS(1.8),
+          }}>
+          No users found.
+        </CustomText>
+      );
+    }
+
+    return FriendUsers.map((item, index) => (
+      <View key={index} style={{width: WP(87), alignSelf: 'center'}}>
+        <View style={{justifyContent: 'center', padding: 10}}>
           <TouchableOpacity
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-            }}>
+            style={{flexDirection: 'row', alignItems: 'center'}}>
             <Image
               style={{
                 height: HP(5),
@@ -111,7 +233,9 @@ const AddFreind = ({navigation}) => {
               }}
               source={Icons.Travel}
             />
-            <CustomText style={{fontSize: FS(1.8)}}>{item?.name}</CustomText>
+            <CustomText style={{fontSize: FS(1.8)}}>
+              {item?.name || 'Unknown'}
+            </CustomText>
           </TouchableOpacity>
           <View
             style={{
@@ -128,8 +252,46 @@ const AddFreind = ({navigation}) => {
     ));
   };
 
+  // 📨 Requests Tab
   const renderRequests = () => {
-    return requests.map((item, index) => (
+    if (loadingRequest) {
+      return (
+        <ActivityIndicator
+          size="large"
+          color="#4000FF"
+          style={{marginTop: HP(3)}}
+        />
+      );
+    }
+
+    if (errorRequest) {
+      return (
+        <CustomText
+          style={{
+            color: 'red',
+            textAlign: 'center',
+            marginTop: HP(3),
+            fontSize: FS(1.8),
+          }}>
+          {errorDiscover}
+        </CustomText>
+      );
+    }
+
+    if (!Array.isArray(RequestUsers) || RequestUsers.length === 0) {
+      return (
+        <CustomText
+          style={{
+            color: 'gray',
+            textAlign: 'center',
+            marginTop: HP(3),
+            fontSize: FS(1.8),
+          }}>
+          No users found.
+        </CustomText>
+      );
+    }
+    return RequestUsers.map((item, index) => (
       <View key={index}>
         <View
           style={{
@@ -171,12 +333,12 @@ const AddFreind = ({navigation}) => {
                   color: '#3E3E54',
                   fontFamily: Fonts.MontserratBold,
                 }}>
-                {item.name}
+                {item?.sender?.name}
               </CustomText>
-              <CustomText
+              {/* <CustomText
                 style={{fontSize: FS(1.3), color: '#3E3E3D'}}
                 children={item.location}
-              />
+              /> */}
             </View>
           </View>
           <View
@@ -195,7 +357,8 @@ const AddFreind = ({navigation}) => {
                   alignItems: 'center',
                   justifyContent: 'center',
                   borderRadius: HP(4),
-                }}>
+                }}
+                onPress={() => handleAccept(item?.id)}>
                 <CustomText
                   style={{
                     color: 'white',
@@ -207,6 +370,7 @@ const AddFreind = ({navigation}) => {
               </TouchableOpacity>
             </LinearGradient>
             <TouchableOpacity
+              onPress={() => handleIgnore(item?.id)}
               style={{
                 height: HP(3),
                 width: WP(17),
@@ -230,8 +394,47 @@ const AddFreind = ({navigation}) => {
     ));
   };
 
+  // 🌐 Discover Tab
   const renderDiscover = () => {
-    return discover.map((item, index) => (
+    if (loadingDiscover) {
+      return (
+        <ActivityIndicator
+          size="large"
+          color="#4000FF"
+          style={{marginTop: HP(3)}}
+        />
+      );
+    }
+
+    if (errorDiscover) {
+      return (
+        <CustomText
+          style={{
+            color: 'red',
+            textAlign: 'center',
+            marginTop: HP(3),
+            fontSize: FS(1.8),
+          }}>
+          {errorDiscover}
+        </CustomText>
+      );
+    }
+
+    if (!Array.isArray(discoverUsers) || discoverUsers.length === 0) {
+      return (
+        <CustomText
+          style={{
+            color: 'gray',
+            textAlign: 'center',
+            marginTop: HP(3),
+            fontSize: FS(1.8),
+          }}>
+          No users found.
+        </CustomText>
+      );
+    }
+
+    return discoverUsers.map((item, index) => (
       <View key={index}>
         <View
           style={{
@@ -250,12 +453,14 @@ const AddFreind = ({navigation}) => {
             alignSelf: 'center',
             marginVertical: HP(1),
           }}>
+          {/* LEFT SIDE */}
           <View
             style={{
               flexDirection: 'row',
               marginTop: HP(1),
               alignItems: 'center',
             }}>
+            {/* Profile Image */}
             <Image
               style={{
                 height: HP(6),
@@ -263,8 +468,10 @@ const AddFreind = ({navigation}) => {
                 borderRadius: HP(3),
                 marginRight: WP(3),
               }}
-              source={Icons.Travel}
+              source={item?.avatarUrl ? {uri: item.avatarUrl} : Icons.Travel}
             />
+
+            {/* Text */}
             <View>
               <CustomText
                 style={{
@@ -273,24 +480,22 @@ const AddFreind = ({navigation}) => {
                   letterSpacing: 0.5,
                   color: '#3E3E54',
                 }}>
-                {item.name}
+                {item?.name || 'Unknown'}
               </CustomText>
-              <CustomText
-                style={{fontSize: FS(1.3), color: '#3E3E3D'}}
-                children={item.location}
-              />
+
+              <CustomText style={{fontSize: FS(1.3), color: '#3E3E3D'}}>
+                {item?.location || 'N/A'}
+              </CustomText>
             </View>
           </View>
-          <View
-            style={{
-              marginTop: HP(1),
-              alignItems: 'center',
-              top: HP(0.5),
-            }}>
+
+          {/* RIGHT SIDE */}
+          <View style={{marginTop: HP(1), alignItems: 'center', top: HP(0.5)}}>
             <LinearGradient
               style={{borderRadius: HP(5)}}
               colors={['#2f78ed', '#4000FF']}>
               <TouchableOpacity
+                onPress={() => handleConnect(item?.id)}
                 style={{
                   height: HP(2.8),
                   width: WP(23),
@@ -308,6 +513,7 @@ const AddFreind = ({navigation}) => {
                 </CustomText>
               </TouchableOpacity>
             </LinearGradient>
+
             <TouchableOpacity
               style={{
                 height: HP(3),
@@ -318,7 +524,7 @@ const AddFreind = ({navigation}) => {
                 marginTop: HP(0.5),
               }}>
               <CustomText style={{color: '#B4B4B4', fontSize: FS(1.2)}}>
-                10 Mutuals
+                {item?.mutuals || 0} Mutuals
               </CustomText>
             </TouchableOpacity>
           </View>
@@ -342,6 +548,7 @@ const AddFreind = ({navigation}) => {
 
   return (
     <SafeAreaView style={{flex: 1, backgroundColor: 'white'}}>
+      {/* Header */}
       <LinearGradient colors={['#FF8530', '#FF8415', '#FFA015']}>
         <View style={{height: HP(8), width: WP(100), marginTop: HP(2)}}>
           <View
@@ -361,15 +568,12 @@ const AddFreind = ({navigation}) => {
                 alignItems: 'center',
                 justifyContent: 'center',
                 marginLeft: HP(2),
-                bottom: HP,
               }}>
-              <Entypo name={'chevron-left'} size={25} color={'#FF754D'} />
+              <Entypo name="chevron-left" size={25} color={'#FF754D'} />
             </TouchableOpacity>
             <CustomText
               style={{
                 fontSize: FS(2.2),
-                // fontWeight: 'bold',
-                // textAlign: 'center',
                 marginBottom: 3,
                 color: '#fff',
                 fontFamily: Fonts.MontserratBold,
@@ -379,6 +583,8 @@ const AddFreind = ({navigation}) => {
           </View>
         </View>
       </LinearGradient>
+
+      {/* Search */}
       <View
         style={{
           height: HP(8),
@@ -403,9 +609,14 @@ const AddFreind = ({navigation}) => {
             name="search"
             color={'#4955E6'}
           />
-          <TextInput style={{marginLeft: WP(3)}} placeholder="Search" />
+          <TextInput
+            style={{marginLeft: WP(3), fontFamily: Fonts.MontserratRegular}}
+            placeholder="Search"
+          />
         </View>
       </View>
+
+      {/* Tabs */}
       <View
         style={{
           flexDirection: 'row',
@@ -428,6 +639,8 @@ const AddFreind = ({navigation}) => {
           </TouchableOpacity>
         ))}
       </View>
+
+      {/* Favorites Label */}
       {activeTab === 'Friends' && (
         <View style={{width: WP(87), alignSelf: 'center', marginBottom: HP(1)}}>
           <View
@@ -458,6 +671,8 @@ const AddFreind = ({navigation}) => {
           </View>
         </View>
       )}
+
+      {/* Content */}
       <ScrollView showsVerticalScrollIndicator={false}>
         {renderContent()}
       </ScrollView>
@@ -465,4 +680,4 @@ const AddFreind = ({navigation}) => {
   );
 };
 
-export default AddFreind;
+export default AddFriends;
